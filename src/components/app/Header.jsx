@@ -140,7 +140,7 @@ const Header = props => {
     if (get(siteConfiguration, 'logoText'))
       logo = siteConfiguration.logoText
     if (get(siteConfiguration, 'logoURL'))
-      logo = (<img src={siteConfiguration.logoURL} style={{ width: '50px', height: '50px', marginTop: '-10px' }} />);
+      logo = (<img src={siteConfiguration.logoURL} style={{ height: '56px', marginTop: '-10px' }} />);
     return logo
   }
 
@@ -174,18 +174,17 @@ const Header = props => {
           }
           <Typography variant="h6" className="col-sm-4" style={{ padding: '0 5px' }}>
             <a className="no-anchor-styles" href={isProduction ? SITE_URL : '/'} rel="noopener noreferrer">
-              <img alt="Brand" src='/coa.svg' className="h-9" style={{ height: '50px', marginRight: '10px' }} />
               {getLogo()}
             </a>
           </Typography>
-          <div className="col-sm-6 col-xs-6">
+          <div className="col-sm-8 col-xs-6">
             {
               props.fhir ?
                 <SearchByAttributeInput {...props} /> :
                 <SearchInput {...props} />
             }
           </div>
-          <div className='col-sm-1 col-xs-6 pull-right no-side-padding' style={{ textAlign: 'right' }}>
+          <div className='col-sm-4 col-xs-6 pull-right no-side-padding' style={{ textAlign: 'right' }}>
             {
               canSwitchServer() && isServerSwitched() &&
               <ServerConfigsChip />

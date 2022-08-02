@@ -1,22 +1,19 @@
 import React from 'react';
 import {
   IconButton, Tooltip,
-  List, ListItem, ListItemIcon, ListItemText, Chip, Divider, Button, Collapse
+  List, ListItem, ListItemText, Chip, Divider, Button
 } from '@mui/material';
 import {
   ExitToApp as LogoutIcon, AccountCircle as AccountIcon,
-  Storage as ServerIcon, ExpandLess as LessIcon, ExpandMore as MoreIcon,
 } from '@mui/icons-material';
 import { get } from 'lodash';
-import { getCurrentUser, getUserInitials, getAppliedServerConfig, canSwitchServer, logoutUser } from '../../common/utils';
-import ServerConfigList from '../common/ServerConfigList';
+import { getCurrentUser, getUserInitials, logoutUser } from '../../common/utils';
 import PopperGrow from '../common/PopperGrow';
 
 const UserOptions = () => {
   const initials = getUserInitials()
   const user = getCurrentUser() || {}
   const [open, setOpen] = React.useState(false);
-  const [serverOpen, setServerOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const handleToggle = () => setOpen((prevOpen) => !prevOpen);
   const handleClose = event => {
@@ -32,7 +29,6 @@ const UserOptions = () => {
   };
   const username = get(user, 'username');
   const displayName = get(user, 'name') || username;
-  const serverConfig = getAppliedServerConfig();
 
   return (
     <React.Fragment>
@@ -71,22 +67,6 @@ const UserOptions = () => {
               <Chip className='manage-account-chip' label={<span style={{fontWeight: 'bold'}}>My Profile</span>} onClick={onHomeClick} />
             </ListItemText>
           </ListItem>
-          <Divider />
-          {
-            canSwitchServer() &&
-            <Tooltip arrow placement='left' title='Switch Server'>
-              <ListItem className='user-option-list-item' onClick={() => setServerOpen(!serverOpen)}>
-                <ListItemIcon style={{minWidth: 'auto', marginRight: '15px'}}>
-                  <ServerIcon fontSize='small' />
-                </ListItemIcon>
-                <ListItemText className='list-item-text' primary='Switch Server' secondary={get(serverConfig, 'name')} />
-                {serverOpen ? <LessIcon /> : <MoreIcon />}
-              </ListItem>
-            </Tooltip>
-          }
-          <Collapse in={serverOpen} style={{maxHeight: '250px', overflow: 'auto'}}>
-            <ServerConfigList onClose={() => setOpen(false)}/>
-          </Collapse>
           <Divider />
           <ListItem style={{display: 'flex', justifyContent: 'center', padding: '16px'}}>
             <Button size='small' startIcon={<LogoutIcon fontSize='inherit' color='inherit' />} variant='outlined' onClick={() => logoutUser(true)}>

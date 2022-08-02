@@ -291,4 +291,31 @@ export const SERVER_CONFIGS = [
       ]
     }
   },
+  {
+    id: 14,
+    name: 'MoH Production',
+    type: 'ocl',
+    url: 'https://nhdd-api.health.go.ke',
+    info: {
+      org: {
+        id: 'MOH',
+        name: "Ministry of Health, Kenya",
+        logo_url: '/coa.svg'
+      },
+      site: {
+        title: 'Kenya National Health Data Dictionary',
+        hideOpenMRSApp: true,
+        logoURL: '/knhdd.svg',
+        footerText: 'Kenya Health Terminology Service. Powered by Open Concept Lab'
+      },
+    },
+    operations: {
+      source: [
+        '$cascade',
+      ],
+      collection: [
+        '$cascade',
+      ],
+    }
+  },
 ]
