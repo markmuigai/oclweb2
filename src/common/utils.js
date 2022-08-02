@@ -26,9 +26,9 @@ export const formatDate = date => moment(date).format(DATE_FORMAT);
 export const formatDateTime = date => moment(date).format(DATETIME_FORMAT);
 
 export const formatWebsiteLink = (value, style, text) => {
-  if(value && value.trim()) {
+  if (value && value.trim()) {
     let href = value.trim();
-    if(!href.startsWith('http://') && !href.startsWith('https://'))
+    if (!href.startsWith('http://') && !href.startsWith('https://'))
       href = 'https://' + href;
 
     return (
@@ -37,7 +37,7 @@ export const formatWebsiteLink = (value, style, text) => {
         rel="noopener noreferrer"
         href={href}
         className="ellipsis-text"
-        style={merge({maxWidth: '100px'}, (style || {}))}>
+        style={merge({ maxWidth: '100px' }, (style || {}))}>
         {text || value.trim()}
       </a>
     );
@@ -45,19 +45,19 @@ export const formatWebsiteLink = (value, style, text) => {
   return '';
 }
 
-export const getIndirectMappings = (mappings, concept_url) => filter(mappings, {to_concept_url: concept_url});
+export const getIndirectMappings = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url });
 
-export const getDirectMappings = (mappings, concept_url) => filter(mappings, {from_concept_url: concept_url});
+export const getDirectMappings = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url });
 
 export const getDirectExternalMappings = (mappings, concept_url) => filter(mappings, mapping => Boolean(mapping.from_concept_url === concept_url && mapping.external_id));
 
-export const getLinkedQuestions = (mappings, concept_url) => filter(mappings, {to_concept_url: concept_url, map_type: 'Q-AND-A'});
+export const getLinkedQuestions = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url, map_type: 'Q-AND-A' });
 
-export const getLinkedAnswers = (mappings, concept_url) => filter(mappings, {from_concept_url: concept_url, map_type: 'Q-AND-A'});
+export const getLinkedAnswers = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url, map_type: 'Q-AND-A' });
 
-export const getSetParents = (mappings, concept_url) => filter(mappings, {to_concept_url: concept_url, map_type: 'CONCEPT-SET'});
+export const getSetParents = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url, map_type: 'CONCEPT-SET' });
 
-export const getSetMembers = (mappings, concept_url) => filter(mappings, {from_concept_url: concept_url, map_type: 'CONCEPT-SET'});
+export const getSetMembers = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url, map_type: 'CONCEPT-SET' });
 
 export const getMappingsDistributionByMapType = (mappings, concept_url) => {
   const linkedQuestions = getLinkedQuestions(mappings, concept_url);
@@ -105,10 +105,10 @@ export const copyURL = url => {
 }
 
 export const copyToClipboard = (copyText, message) => {
-  if(copyText)
+  if (copyText)
     navigator.clipboard.writeText(copyText);
 
-  if(message)
+  if (message)
     alertifyjs.success(message);
 }
 
@@ -116,7 +116,7 @@ export const toParentURI = uri => uri.split('/').splice(0, 5).join('/') + '/';
 
 export const toOwnerURI = uri => uri.split('/').splice(0, 3).join('/') + '/';
 
-export const headFirst = versions => compact([find(versions, {version: 'HEAD'}), ...reject(versions, {version: 'HEAD'})]);
+export const headFirst = versions => compact([find(versions, { version: 'HEAD' }), ...reject(versions, { version: 'HEAD' })]);
 
 export const currentUserToken = () => localStorage.token;
 
@@ -124,7 +124,7 @@ export const isLoggedIn = () => Boolean(currentUserToken());
 
 export const getCurrentUser = () => {
   const data = localStorage.user;
-  if(data)
+  if (data)
     return JSON.parse(data);
 
   return null;
@@ -139,25 +139,25 @@ export const nonEmptyCount = (object, attributes) => size(intersectionBy(keys(om
 export const isCurrentUserMemberOf = orgId => Boolean(orgId && includes(map(getCurrentUserOrgs(), 'id'), orgId));
 
 export const defaultCreatePin = (resourceType, resourceId, service, callback) => {
-  if(service) {
-    service.post({resource_type: resourceType, resource_id: resourceId}).then(response => {
-      if(get(response, 'error')) {
+  if (service) {
+    service.post({ resource_type: resourceType, resource_id: resourceId }).then(response => {
+      if (get(response, 'error')) {
         let error;
-        if(isArray(response.error) && !isEmpty(compact(response.error)))
+        if (isArray(response.error) && !isEmpty(compact(response.error)))
           error = compact(response.error)[0];
         else
           error = get(values(response.error), '0') || 'Something bad happened.';
         alertifyjs.error(error);
-      } else if(callback && get(response, 'status') === 201)
+      } else if (callback && get(response, 'status') === 201)
         callback(response.data);
     });
   }
 }
 
 export const defaultDeletePin = (service, callback) => {
-  if(service) {
+  if (service) {
     service.delete().then(response => {
-      if(callback && get(response, 'status') === 204)
+      if (callback && get(response, 'status') === 204)
         callback();
     });
   }
@@ -178,37 +178,37 @@ export const sortObjectBy = (obj, comparator) => {
 }
 
 export const arrayToObject = arr => {
-  if(isEmpty(arr))
+  if (isEmpty(arr))
     return {};
 
   return arr.reduce((prev, curr) => {
-    if(curr.key)
+    if (curr.key)
       prev[curr.key] = curr.value;
     return prev;
   }, {});
 }
 
 export const currentUserHasAccess = () => {
-  if(!isLoggedIn())
+  if (!isLoggedIn())
     return false;
-  if(isAdminUser())
+  if (isAdminUser())
     return true;
 
   const url = window.location.hash.replace('#/', '');
-  if(!url)
+  if (!url)
     return false;
 
   const url_parts = compact(url.split('/'));
 
   const ownerType = url_parts[0];
   const owner = url_parts[1];
-  if(!owner || !ownerType)
+  if (!owner || !ownerType)
     return false;
 
   const currentUser = getCurrentUser();
-  if(ownerType === 'users')
+  if (ownerType === 'users')
     return currentUser.username === owner;
-  if(ownerType === 'orgs')
+  if (ownerType === 'orgs')
     return isSubscribedTo(owner);
 
   return false;
@@ -220,12 +220,12 @@ export const getCurrentURL = () => window.location.href.replace(new RegExp('/$')
 
 const handleLookupValuesResponse = (data, callback, attr) => {
   const _attr = attr || 'id';
-  callback(orderBy(uniqBy(map(data, cc => ({id: get(cc, _attr), name: get(cc, _attr)})), 'name')), 'name');
+  callback(orderBy(uniqBy(map(data, cc => ({ id: get(cc, _attr), name: get(cc, _attr) })), 'name')), 'name');
 }
 
 export const fetchLocales = callback => {
-  APIService.orgs('OCL').sources('Locales').appendToUrl('concepts/lookup/').get(null, null, {verbose: true}).then(response => {
-    callback(orderBy(map(response.data, l => ({id: l.id, name: `${l.display_name} [${l.id}]`, uuid: l.uuid})), 'name'));
+  APIService.orgs('OCL').sources('Locales').appendToUrl('concepts/lookup/').get(null, null, { verbose: true }).then(response => {
+    callback(orderBy(map(response.data, l => ({ id: l.id, name: `${l.display_name} [${l.id}]`, uuid: l.uuid })), 'name'));
   });
 }
 
@@ -260,7 +260,7 @@ export const fetchDescriptionTypes = callback => {
 }
 
 export const downloadObject = (obj, format, filename) => {
-  const data = new Blob([obj], {type: format});
+  const data = new Blob([obj], { type: format });
   downloadFromURL(window.URL.createObjectURL(data), filename);
 }
 
@@ -282,10 +282,10 @@ export const arrayToCSV = objArray => {
 }
 
 export const refreshCurrentUserCache = callback => {
-  APIService.user().get(null, null, {includeSubscribedOrgs: true, includeAuthGroups: true}).then(response => {
-    if(response.status === 200) {
+  APIService.user().get(null, null, { includeSubscribedOrgs: true, includeAuthGroups: true }).then(response => {
+    if (response.status === 200) {
       localStorage.setItem('user', JSON.stringify(response.data));
-      if(callback) callback(response);
+      if (callback) callback(response);
     }
   });
 }
@@ -293,19 +293,19 @@ export const refreshCurrentUserCache = callback => {
 export const replaceCurrentUserCacheWith = data => localStorage.setItem('user', JSON.stringify(data));
 
 export const formatByteSize = bytes => {
-  if(bytes < 1024) return bytes + " bytes";
-  else if(bytes < 1048576) return(bytes / 1024).toFixed(3) + " KB";
-  else if(bytes < 1073741824) return(bytes / 1048576).toFixed(3) + " MB";
-  else return(bytes / 1073741824).toFixed(3) + " GB";
+  if (bytes < 1024) return bytes + " bytes";
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(3) + " KB";
+  else if (bytes < 1073741824) return (bytes / 1048576).toFixed(3) + " MB";
+  else return (bytes / 1073741824).toFixed(3) + " GB";
 };
 
 
-export const memorySizeOf = (obj, format=true) => {
+export const memorySizeOf = (obj, format = true) => {
   var bytes = 0;
 
   const sizeOf = obj => {
-    if(obj !== null && obj !== undefined) {
-      switch(typeof obj) {
+    if (obj !== null && obj !== undefined) {
+      switch (typeof obj) {
         case 'number':
           bytes += 8;
           break;
@@ -317,9 +317,9 @@ export const memorySizeOf = (obj, format=true) => {
           break;
         case 'object':
           var objClass = Object.prototype.toString.call(obj).slice(8, -1);
-          if(objClass === 'Object' || objClass === 'Array') {
-            for(var key in obj) {
-              if(!obj.hasOwnProperty(key)) continue;
+          if (objClass === 'Object' || objClass === 'Array') {
+            for (var key in obj) {
+              if (!obj.hasOwnProperty(key)) continue;
               sizeOf(obj[key]);
             }
           } else bytes += obj.toString().length * 2;
@@ -332,7 +332,7 @@ export const memorySizeOf = (obj, format=true) => {
 
   const byteSize = sizeOf(obj);
 
-  if(format)
+  if (format)
     return formatByteSize(byteSize);
 
   return byteSize;
@@ -340,16 +340,16 @@ export const memorySizeOf = (obj, format=true) => {
 
 export const getCurrentUserCollections = callback => {
   const username = getCurrentUserUsername();
-  if(username) {
+  if (username) {
     APIService.users(username)
-              .collections()
-              .get(null, null, {limit: 1000})
-              .then(response => isArray(response.data) ? callback(response.data) : false);
+      .collections()
+      .get(null, null, { limit: 1000 })
+      .then(response => isArray(response.data) ? callback(response.data) : false);
     APIService.users(username)
-              .orgs()
-              .appendToUrl('collections/')
-              .get(null, null, {limit: 1000})
-              .then(response => isArray(response.data) ? callback(response.data) : false);
+      .orgs()
+      .appendToUrl('collections/')
+      .get(null, null, { limit: 1000 })
+      .then(response => isArray(response.data) ? callback(response.data) : false);
   }
 }
 
@@ -364,7 +364,7 @@ export const isValidPassword = (password, strength, minStrength = 3) => {
 
 export const getUserInitials = user => {
   user = user || getCurrentUser();
-  if(!user)
+  if (!user)
     return '';
 
   let result = '';
@@ -373,20 +373,20 @@ export const getUserInitials = user => {
   const username = user.username;
   const hasValidFirstName = first_name && first_name !== '-';
   const hasValidLastName = last_name && last_name !== '-';
-  if(!hasValidFirstName && !hasValidLastName && username)
+  if (!hasValidFirstName && !hasValidLastName && username)
     result = username.slice(0, 2);
-  if(hasValidFirstName)
+  if (hasValidFirstName)
     result = first_name[0];
-  if(hasValidLastName)
+  if (hasValidLastName)
     result += last_name[0];
-  if(result.length == 1 && hasValidFirstName)
+  if (result.length == 1 && hasValidFirstName)
     result += first_name[1];
 
   return result.toUpperCase();
 }
 
 export const jsonifySafe = data => {
-  if(!data)
+  if (!data)
     return data;
 
   try {
@@ -398,18 +398,18 @@ export const jsonifySafe = data => {
 
 export const getSelectedServerConfig = () => {
   const serverConfig = localStorage.getItem('server');
-  if(serverConfig)
+  if (serverConfig)
     return JSON.parse(serverConfig);
 }
 
 export const getAppliedServerConfig = () => {
   const selectedConfig = getSelectedServerConfig();
 
-  if(selectedConfig)
+  if (selectedConfig)
     return selectedConfig;
 
   const APIURL = window.API_URL || process.env.API_URL;
-  return find(SERVER_CONFIGS, {url: APIURL});
+  return find(SERVER_CONFIGS, { url: APIURL });
 }
 
 export const isServerSwitched = () => {
@@ -419,19 +419,19 @@ export const isServerSwitched = () => {
 
 export const getDefaultServerConfig = () => {
   const APIURL = window.API_URL || process.env.API_URL;
-  return find(SERVER_CONFIGS, {url: APIURL});
+  return find(SERVER_CONFIGS, { url: APIURL });
 }
 
-export const getLocalFHIRServerConfig = () => find(SERVER_CONFIGS, {type: 'fhir', local: true});
-export const getDefaultFHIRServerConfig = () => find(SERVER_CONFIGS, {id: DEFAULT_FHIR_SERVER_FOR_LOCAL_ID});
+export const getLocalFHIRServerConfig = () => find(SERVER_CONFIGS, { type: 'fhir', local: true });
+export const getDefaultFHIRServerConfig = () => find(SERVER_CONFIGS, { id: DEFAULT_FHIR_SERVER_FOR_LOCAL_ID });
 
 export const getFHIRServerConfigFromCurrentContext = () => {
   const server = getAppliedServerConfig();
-  if(server.type === 'fhir')
+  if (server.type === 'fhir')
     return server;
-  if(server.fhirServerId)
-    return find(SERVER_CONFIGS, {type: 'fhir', id: server.fhirServerId});
-  if(server.local)
+  if (server.fhirServerId)
+    return find(SERVER_CONFIGS, { type: 'fhir', id: server.fhirServerId });
+  if (server.local)
     return getLocalFHIRServerConfig() || getDefaultFHIRServerConfig();
 }
 
@@ -462,7 +462,7 @@ export const isMapping = uri => Boolean(uri.match('/mappings/'));
  *
  * @return Formatted string.
  */
-export const humanFileSize = (bytes, si=false, dp=1) => {
+export const humanFileSize = (bytes, si = false, dp = 1) => {
   const thresh = si ? 1000 : 1024;
 
   if (Math.abs(bytes) < thresh) {
@@ -470,10 +470,10 @@ export const humanFileSize = (bytes, si=false, dp=1) => {
   }
 
   const units = si
-              ? ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-              : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    ? ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
   let u = -1;
-  const r = 10**dp;
+  const r = 10 ** dp;
 
   do {
     bytes /= thresh;
@@ -485,21 +485,21 @@ export const humanFileSize = (bytes, si=false, dp=1) => {
 }
 
 export const getServerConfigsForCurrentUser = () => {
-  if(isAdminUser())
+  if (isAdminUser())
     return SERVER_CONFIGS;
 
   const defaultConfig = getDefaultServerConfig();
   const appliedConfig = getAppliedServerConfig();
 
   let eligible = [];
-  if(isLoggedIn()) {
+  if (isLoggedIn()) {
     const { auth_groups } = getCurrentUser();
-    if(includes(auth_groups, OCL_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, {type: 'ocl'})];
-    if(includes(auth_groups, OCL_FHIR_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, {type: 'fhir', hapi: false})];
-    if(includes(auth_groups, HAPI_FHIR_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, {type: 'fhir', hapi: true})];
+    if (includes(auth_groups, OCL_SERVERS_GROUP))
+      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'ocl' })];
+    if (includes(auth_groups, OCL_FHIR_SERVERS_GROUP))
+      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'fhir', hapi: false })];
+    if (includes(auth_groups, HAPI_FHIR_SERVERS_GROUP))
+      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'fhir', hapi: true })];
   } else {
     eligible = JSON.parse(localStorage.getItem('server_configs')) || [];
   }
@@ -508,12 +508,12 @@ export const getServerConfigsForCurrentUser = () => {
   return uniqBy(eligible, 'url');
 }
 
-export const arrayToSentence = (arr, separator, lastSeparator=' and ') => {
-  if(arr.length <= 2)
+export const arrayToSentence = (arr, separator, lastSeparator = ' and ') => {
+  if (arr.length <= 2)
     return arr.join(lastSeparator);
 
   const newArr = cloneDeep(arr);
-  newArr.push( `${lastSeparator}${newArr.pop()}`);
+  newArr.push(`${lastSeparator}${newArr.pop()}`);
   return newArr.join(separator);
 }
 
@@ -522,17 +522,17 @@ export const generateRandomString = () => Math.random().toString(36).substring(7
 export const getEnv = forURL => {
   const fqdn = window.location.origin;
 
-  if(fqdn.match('app.staging.openconceptlab'))
+  if (fqdn.match('app.staging.openconceptlab'))
     return 'staging';
-  if(fqdn.match('app.qa.openconceptlab'))
+  if (fqdn.match('app.qa.openconceptlab'))
     return 'qa';
-  if(fqdn.match('app.demo.openconceptlab'))
+  if (fqdn.match('app.demo.openconceptlab'))
     return 'demo';
-  if(fqdn.match('app.dev.openconceptlab'))
+  if (fqdn.match('app.dev.openconceptlab'))
     return 'dev';
-  if(fqdn.match('app.staging.who.openconceptlab'))
+  if (fqdn.match('app.staging.who.openconceptlab'))
     return forURL ? 'staging.who' : 'staging-who';
-  if(fqdn.match('app.openconceptlab'))
+  if (fqdn.match('app.openconceptlab'))
     return forURL ? '' : 'production';
 
   return 'development';
@@ -541,10 +541,10 @@ export const getEnv = forURL => {
 export const getOpenMRSURL = () => {
   let env = getEnv(true);
 
-  if(env === 'development')
+  if (env === 'development')
     env = 'qa';
 
-  if(env) env += '.';
+  if (env) env += '.';
 
   return OPENMRS_URL.replace('openmrs.', `openmrs.${env}`);
 }
@@ -556,77 +556,77 @@ export const setUpRecentHistory = history => {
     let type = '';
     let category = '';
     let format = false;
-    if(location.pathname.match('/login') || location.pathname === '/')
+    if (location.pathname.match('/login') || location.pathname === '/')
       return;
-    if(location.pathname.match('/imports')) {
+    if (location.pathname.match('/imports')) {
       type = category = 'import';
       format = true;
-    } else if(location.pathname.match('/search/')) {
+    } else if (location.pathname.match('/search/')) {
       category = 'search';
       const queryParams = new URLSearchParams(location.search);
       type = queryParams.get('type');
       format = true;
-    } else if(location.pathname.match('/compare')) {
+    } else if (location.pathname.match('/compare')) {
       category = 'compare';
       type = 'concepts';
       format = true;
     } else {
-      if(urlParts.length <= 3) {
+      if (urlParts.length <= 3) {
         type = category = urlParts[0];
         urlParts = without(urlParts, 'orgs', 'users');
       }
-      if(urlParts.length == 4) {
+      if (urlParts.length == 4) {
         type = category = urlParts[2];
         urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
       }
-      if(urlParts.length == 5) {
-        if(includes(['mappings', 'concepts', 'versions', 'references'], last(urlParts))) {
+      if (urlParts.length == 5) {
+        if (includes(['mappings', 'concepts', 'versions', 'references'], last(urlParts))) {
           type = category = last(urlParts);
         }
         urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
       }
-      if(urlParts.length >= 6) {
-        if(location.pathname.match('/concepts/')) {
+      if (urlParts.length >= 6) {
+        if (location.pathname.match('/concepts/')) {
           type = category = 'concept';
         }
-        if(location.pathname.match('/mappings/')) {
+        if (location.pathname.match('/mappings/')) {
           type = category = 'mapping';
         }
-        if(location.pathname.match('/references')) {
+        if (location.pathname.match('/references')) {
           type = category = 'reference';
         }
-        if(location.pathname.match('/expansions')) {
+        if (location.pathname.match('/expansions')) {
           type = category = 'expansion';
         }
         urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
       }
     }
-    if(!includes(['concepts', 'mappings'], last(urlParts)))
+    if (!includes(['concepts', 'mappings'], last(urlParts)))
       urlParts = without(urlParts, 'concepts', 'mappings');
     let name = format ? map(urlParts, capitalize).join(' / ') : urlParts.join(' / ');
-    if(category !== type && type)
+    if (category !== type && type)
       name += ' / ' + type;
-    const lastVisit =  visits[0];
-    if(isEqual(get(lastVisit, 'name'), name))
+    const lastVisit = visits[0];
+    if (isEqual(get(lastVisit, 'name'), name))
       visits.shift();
-    visits.push({name: name, location: location, type: type || '', category: category || '', at: new Date().getTime()});
+    visits.push({ name: name, location: location, type: type || '', category: category || '', at: new Date().getTime() });
     visits = orderBy(visits, 'at', 'desc').slice(0, 10);
     localStorage.setItem('visits', JSON.stringify(visits));
   });
 }
 
-export const getSiteTitle = () => get(getAppliedServerConfig(), 'info.site.title', 'Kenya NHDD');
+export const getSiteTitle = () => get(getAppliedServerConfig(), 'info.site.title', 'Kenya National Health Data Dictionary (NHDD)');
 
-export const getRandomColor = () => `#${Math.floor(Math.random()*16777215).toString(16)}`;
+export const getRandomColor = () => `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
 export const logoutUser = (alert = true, redirectToLogin) => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   localStorage.removeItem('visits');
-  if(alert)
+  if (alert)
     alertifyjs.success('You have signed out.');
 
-  if(redirectToLogin)
+  if (redirectToLogin)
     window.location.hash = '#/accounts/login';
   else {
     window.location.hash = '#/';
@@ -634,68 +634,68 @@ export const logoutUser = (alert = true, redirectToLogin) => {
   }
 }
 
-export const paramsToParentURI = (params, versioned=false) => {
+export const paramsToParentURI = (params, versioned = false) => {
   let uri = '';
-  if(params.org)
+  if (params.org)
     uri += `/orgs/${params.org}`;
   else if (params.user)
     uri += `/users/${params.user}`;
-  if(params.source)
+  if (params.source)
     uri += `/sources/${params.source}`;
-  else if(params.collection)
+  else if (params.collection)
     uri += `/collections/${params.collection}`;
-  if(params.version && !versioned)
+  if (params.version && !versioned)
     uri += `/${params.version}`;
 
   return uri + '/';
 }
 
-export const paramsToURI = (params, versioned=false, expansion=false) => {
+export const paramsToURI = (params, versioned = false, expansion = false) => {
   let uri = '';
-  if(params.org)
+  if (params.org)
     uri += `/orgs/${params.org}`;
   else if (params.user)
     uri += `/users/${params.user}`;
-  if(params.source)
+  if (params.source)
     uri += `/sources/${params.source}`;
-  else if(params.collection)
+  else if (params.collection)
     uri += `/collections/${params.collection}`;
-  if(params.version && !versioned)
+  if (params.version && !versioned)
     uri += `/${params.version}`;
-  if(params.expansion && !expansion)
+  if (params.expansion && !expansion)
     uri += `/expansions/${params.expansion}`;
-  if(params.concept)
+  if (params.concept)
     uri += `/concepts/${params.concept}`;
-  else if(params.mapping)
+  else if (params.mapping)
     uri += `/mappings/${params.mapping}`;
-  if(params.conceptVersion && !versioned)
+  if (params.conceptVersion && !versioned)
     uri += `/${params.conceptVersion}`;
-  if(params.mappingVersion && !versioned)
+  if (params.mappingVersion && !versioned)
     uri += `/${params.mappingVersion}`;
 
   return uri + '/';
 }
 
 export const getWidthOfText = (txt, fontname, fontsize) => {
-  if(getWidthOfText.c === undefined){
-    getWidthOfText.c=document.createElement('canvas');
-    getWidthOfText.ctx=getWidthOfText.c.getContext('2d');
+  if (getWidthOfText.c === undefined) {
+    getWidthOfText.c = document.createElement('canvas');
+    getWidthOfText.ctx = getWidthOfText.c.getContext('2d');
   }
   var fontspec = fontsize + ' ' + fontname;
-  if(getWidthOfText.ctx.font !== fontspec)
+  if (getWidthOfText.ctx.font !== fontspec)
     getWidthOfText.ctx.font = fontspec;
   return getWidthOfText.ctx.measureText(txt).width + 60;
 }
 
 export const getParamsFromObject = item => {
   let params = {};
-  if(item.owner_type === 'Organization')
+  if (item.owner_type === 'Organization')
     params.org = item.owner;
-  else if(item.owner_type === 'User')
+  else if (item.owner_type === 'User')
     params.user = item.owner;
-  if(item.source)
+  if (item.source)
     params.source = item.source;
-  if(item.map_type)
+  if (item.map_type)
     params.mapping = item.id;
   else if (item.concept_class)
     params.concept = item.id;
@@ -704,7 +704,7 @@ export const getParamsFromObject = item => {
 }
 
 export const dropVersion = uri => {
-  if(!uri)
+  if (!uri)
     return uri
 
   const parts = uri.split('/')

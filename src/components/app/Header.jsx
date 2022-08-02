@@ -94,14 +94,14 @@ const Header = props => {
   const [nestedTools, setNestedTools] = React.useState(false);
   const toggleNestedCommunity = () => {
     const value = !nestedCommunity
-    if(value)
+    if (value)
       setNestedTools(false)
     setNestedCommunity(value)
   };
 
   const toggleNestedTools = () => {
     const value = !nestedTools
-    if(value)
+    if (value)
       setNestedCommunity(false)
     setNestedTools(value)
   };
@@ -117,7 +117,7 @@ const Header = props => {
     const newOpen = !prevOpen
     props.onOpen(newOpen)
     setTimeout(() => window.dispatchEvent(new CustomEvent("resize")), 300)
-    if(!newOpen) {
+    if (!newOpen) {
       setNestedTools(false)
       setNestedCommunity(false)
     }
@@ -137,10 +137,10 @@ const Header = props => {
 
   const getLogo = () => {
     let logo = getSiteTitle()
-    if(get(siteConfiguration, 'logoText'))
+    if (get(siteConfiguration, 'logoText'))
       logo = siteConfiguration.logoText
-    if(get(siteConfiguration, 'logoURL'))
-      logo = (<img src={siteConfiguration.logoURL} style={{width: '50px', height: '50px', marginTop: '-10px'}} />);
+    if (get(siteConfiguration, 'logoURL'))
+      logo = (<img src={siteConfiguration.logoURL} style={{ width: '50px', height: '50px', marginTop: '-10px' }} />);
     return logo
   }
 
@@ -159,7 +159,7 @@ const Header = props => {
         }}
         className={classes.appBar}
       >
-        <Toolbar style={{padding: '0 15px'}}>
+        <Toolbar style={{ padding: '0 15px' }}>
           {
             !hideLeftNav &&
             <IconButton
@@ -172,232 +172,232 @@ const Header = props => {
               <MenuIcon />
             </IconButton>
           }
-          <Typography variant="h6" className="brand col-sm-4" style={{padding: '0 5px'}}>
+          <Typography variant="h6" className="col-sm-4" style={{ padding: '0 5px' }}>
             <a className="no-anchor-styles" href={isProduction ? SITE_URL : '/'} rel="noopener noreferrer">
-              <img alt="Brand" src='coa.svg' className="h-9" style={{height: '50px', marginRight: '10px'}}/>
+              <img alt="Brand" src='/coa.svg' className="h-9" style={{ height: '50px', marginRight: '10px' }} />
               {getLogo()}
             </a>
           </Typography>
-          <div className="col-sm-8 col-xs-6">
+          <div className="col-sm-6 col-xs-6">
             {
               props.fhir ?
-              <SearchByAttributeInput {...props} /> :
-              <SearchInput {...props} />
+                <SearchByAttributeInput {...props} /> :
+                <SearchInput {...props} />
             }
           </div>
-          <div className='col-sm-4 col-xs-6 pull-right no-side-padding'style={{textAlign: 'right'}}>
+          <div className='col-sm-1 col-xs-6 pull-right no-side-padding' style={{ textAlign: 'right' }}>
             {
               canSwitchServer() && isServerSwitched() &&
               <ServerConfigsChip />
             }
             {
               authenticated ?
-              <span style={{marginLeft: '20px'}}>
-                <RecentHistory />
-                <Favorites />
-                {
-                  !hideAppsMenu &&
-                  <AppsMenu
-                    hideOpenMRSApp={hideOpenMRSApp}
-                    hideTermBrowserApp={hideTermBrowserApp}
-                    hideImportApp={hideImportApp}
-                  />
-                }
-                <UserOptions />
-              </span> :
-              (
-                !isFHIRServer &&
-                <span style={{marginLeft: '20px'}}>
-                  <Button className='primary-btn' href="/#/accounts/login" color='primary' variant='contained'>
-                    Sign In
-                  </Button>
-                </span>
-              )
+                <span style={{ marginLeft: '20px' }}>
+                  <RecentHistory />
+                  <Favorites />
+                  {
+                    !hideAppsMenu &&
+                    <AppsMenu
+                      hideOpenMRSApp={hideOpenMRSApp}
+                      hideTermBrowserApp={hideTermBrowserApp}
+                      hideImportApp={hideImportApp}
+                    />
+                  }
+                  <UserOptions />
+                </span> :
+                (
+                  !isFHIRServer &&
+                  <span style={{ marginLeft: '20px' }}>
+                    <Button className='primary-btn' href="/#/accounts/login" color='primary' variant='contained'>
+                      Sign In
+                    </Button>
+                  </span>
+                )
             }
           </div>
         </Toolbar>
       </AppBar>
       {
         open ?
-        <Drawer
-          className={classes.drawer}
-          variant="persistent"
-          anchor="left"
-          open
-          classes={{
-            paper: classes.drawerPaper,
-          }}
-          style={hideLeftNav ? {display: 'none'} : {}}
+          <Drawer
+            className={classes.drawer}
+            variant="persistent"
+            anchor="left"
+            open
+            classes={{
+              paper: classes.drawerPaper,
+            }}
+            style={hideLeftNav ? { display: 'none' } : {}}
           >
-          <Toolbar />
-          <div className={classes.drawerContainer}>
+            <Toolbar />
+            <div className={classes.drawerContainer}>
+              <List>
+                {
+                  map(OPTIONS, option => {
+                    const { href, label, nested, selected, icon } = option;
+                    const hasNested = !isEmpty(nested);
+                    const isCommunity = label === 'Community';
+                    const toggleFunc = isCommunity ? toggleNestedCommunity : toggleNestedTools;
+                    const toggleState = isCommunity ? nestedCommunity : nestedTools;
+                    return (
+                      <React.Fragment key={label}>
+                        <ListItem
+                          className='btn'
+                          button
+                          component="a"
+                          target='_blank'
+                          selected={selected}
+                          href={!hasNested ? href : undefined}
+                          onClick={hasNested ? toggleFunc : undefined}
+                          style={selected ? { padding: '12px 16px', backgroundColor: 'rgba(51, 115, 170, 0.1)' } : { padding: '12px 16px' }}
+                        >
+                          <ListItemIcon style={{ minWidth: '35px' }}>
+                            {icon}
+                          </ListItemIcon>
+                          <ListItemText primary={label} />
+                          {
+                            hasNested && (
+                              toggleState ?
+                                <ExpandLessIcon /> :
+                                <ExpandMoreIcon />
+                            )
+                          }
+                        </ListItem>
+                        {
+                          hasNested &&
+                          <Collapse in={toggleState} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                              {
+                                nested.map(nestedOption => (
+                                  <ListItem
+                                    className='btn'
+                                    button
+                                    component="a"
+                                    target='_blank'
+                                    key={nestedOption.label}
+                                    href={nestedOption.href}
+                                    style={{ padding: '12px 16px 12px 30px' }}
+                                  >
+                                    <ListItemIcon style={{ minWidth: '35px' }}>
+                                      {nestedOption.icon}
+                                    </ListItemIcon>
+                                    <ListItemText primary={nestedOption.label} />
+                                  </ListItem>
+                                ))
+                              }
+                            </List>
+                          </Collapse>
+                        }
+                      </React.Fragment>
+                    )
+                  })
+                }
+                {/* <Feedback mainButtonLabel='Feedback' containerClassName='feedback-div-open' /> */}
+              </List>
+            </div>
+          </Drawer> :
+          <Drawer
+            id='left-menu-collapsed'
+            style={{ flexShrink: 0, width: 'auto', display: hideLeftNav ? 'none' : 'inherit' }}
+            variant="permanent"
+            anchor="left"
+            open
+            classes={{
+              paper: 'menu-collapsed-paper'
+            }}
+          >
+            <div className={classes.drawerHeader}>
+              <IconButton
+                color="primary"
+                aria-label="open drawer"
+                onClick={toggleOpen}
+                edge="start"
+                className={open ? classes.menuButton + ' ' + classes.hide : classes.menuButton}
+                style={{ marginLeft: 0 }}
+                size="large">
+                <MenuIcon />
+              </IconButton>
+            </div>
             <List>
               {
                 map(OPTIONS, option => {
-                  const { href, label, nested, selected, icon } = option;
+                  const { href, label, selected, icon, nested, tooltip } = option;
                   const hasNested = !isEmpty(nested);
                   const isCommunity = label === 'Community';
+                  const isTools = label === 'Tools';
                   const toggleFunc = isCommunity ? toggleNestedCommunity : toggleNestedTools;
                   const toggleState = isCommunity ? nestedCommunity : nestedTools;
+                  let anchorRef;
+                  if (isCommunity)
+                    anchorRef = communityAnchorRef
+                  if (isTools)
+                    anchorRef = toolsAnchorRef
+
                   return (
                     <React.Fragment key={label}>
-                      <ListItem
-                        className='btn'
-                        button
-                        component="a"
-                        target='_blank'
-                        selected={selected}
-                        href={!hasNested ? href : undefined}
-                        onClick={hasNested ? toggleFunc : undefined}
-                        style={selected ? {padding: '12px 16px', backgroundColor: 'rgba(51, 115, 170, 0.1)'} : {padding: '12px 16px'}}
-                      >
-                        <ListItemIcon style={{minWidth: '35px'}}>
-                          {icon}
-                        </ListItemIcon>
-                        <ListItemText primary={label} />
-                        {
-                          hasNested && (
-                            toggleState ?
-                            <ExpandLessIcon /> :
-                            <ExpandMoreIcon />
-                          )
-                        }
-                      </ListItem>
+                      <Tooltip arrow title={tooltip || label} placement='right'>
+                        <ListItem
+                          className='btn'
+                          button
+                          component="a"
+                          target='_blank'
+                          selected={selected}
+                          href={hasNested ? undefined : href}
+                          style={selected ? { padding: '16px 16px', backgroundColor: 'rgba(51, 115, 170, 0.1)' } : { padding: '16px 16px' }}
+                          onClick={hasNested ? toggleFunc : undefined}
+                          ref={anchorRef}
+                        >
+                          <ListItemIcon>
+                            {icon}
+                          </ListItemIcon>
+                        </ListItem>
+                      </Tooltip>
                       {
-                        hasNested &&
-                        <Collapse in={toggleState} timeout="auto" unmountOnExit>
-                          <List component="div" disablePadding>
-                            {
-                              nested.map(nestedOption => (
-                                <ListItem
-                                  className='btn'
-                                  button
-                                  component="a"
-                                  target='_blank'
-                                  key={nestedOption.label}
-                                  href={nestedOption.href}
-                                  style={{padding: '12px 16px 12px 30px'}}
-                                  >
-                                  <ListItemIcon style={{minWidth: '35px'}}>
-                                    {nestedOption.icon}
-                                  </ListItemIcon>
-                                  <ListItemText primary={nestedOption.label} />
-                                </ListItem>
-                              ))
-                            }
-                          </List>
-                        </Collapse>
+                        anchorRef && toggleState &&
+                        <Popper
+                          open={toggleState}
+                          anchorEl={anchorRef.current}
+                          transition
+                          className='menu-popper-right'
+                          placement='right'
+                        >
+                          {({ TransitionProps }) => (
+                            <Grow {...TransitionProps}>
+                              <Paper>
+                                <ClickAwayListener onClickAway={event => handleCloseNested(event, anchorRef, toggleFunc)}>
+                                  <List>
+                                    {
+                                      nested.map(nestedOption => (
+                                        <ListItem
+                                          className='btn'
+                                          button
+                                          component="a"
+                                          target='_blank'
+                                          key={nestedOption.label}
+                                          href={nestedOption.href}
+                                          style={{ padding: '12px' }}
+                                        >
+                                          <ListItemIcon style={{ minWidth: '35px' }}>
+                                            {nestedOption.icon}
+                                          </ListItemIcon>
+                                          <ListItemText primary={nestedOption.label} />
+                                        </ListItem>
+                                      ))
+                                    }
+                                  </List>
+                                </ClickAwayListener>
+                              </Paper>
+                            </Grow>
+                          )}
+                        </Popper>
                       }
                     </React.Fragment>
                   )
                 })
               }
-              {/* <Feedback mainButtonLabel='Feedback' containerClassName='feedback-div-open' /> */}
+              {/* <Feedback mainButtonLabel={false} containerClassName='feedback-div' /> */}
             </List>
-          </div>
-        </Drawer> :
-        <Drawer
-          id='left-menu-collapsed'
-          style={{flexShrink: 0, width: 'auto', display: hideLeftNav ? 'none' : 'inherit'}}
-          variant="permanent"
-          anchor="left"
-          open
-          classes={{
-            paper: 'menu-collapsed-paper'
-          }}
-          >
-          <div className={classes.drawerHeader}>
-            <IconButton
-              color="primary"
-              aria-label="open drawer"
-              onClick={toggleOpen}
-              edge="start"
-              className={open ? classes.menuButton + ' ' + classes.hide : classes.menuButton}
-              style={{marginLeft: 0}}
-              size="large">
-              <MenuIcon />
-            </IconButton>
-          </div>
-          <List>
-            {
-              map(OPTIONS, option => {
-                const { href, label, selected, icon, nested, tooltip } = option;
-                const hasNested = !isEmpty(nested);
-                const isCommunity = label === 'Community';
-                const isTools = label === 'Tools';
-                const toggleFunc = isCommunity ? toggleNestedCommunity : toggleNestedTools;
-                const toggleState = isCommunity ? nestedCommunity : nestedTools;
-                let anchorRef;
-                if(isCommunity)
-                  anchorRef = communityAnchorRef
-                if(isTools)
-                  anchorRef = toolsAnchorRef
-
-                return (
-                  <React.Fragment key={label}>
-                    <Tooltip arrow title={tooltip || label} placement='right'>
-                      <ListItem
-                        className='btn'
-                        button
-                        component="a"
-                        target='_blank'
-                        selected={selected}
-                        href={hasNested ? undefined : href}
-                        style={selected ? {padding: '16px 16px', backgroundColor: 'rgba(51, 115, 170, 0.1)'} : {padding: '16px 16px'}}
-                        onClick={hasNested ? toggleFunc : undefined}
-                        ref={anchorRef}
-                      >
-                        <ListItemIcon>
-                          {icon}
-                        </ListItemIcon>
-                      </ListItem>
-                    </Tooltip>
-                    {
-                      anchorRef && toggleState &&
-                      <Popper
-                        open={toggleState}
-                        anchorEl={anchorRef.current}
-                        transition
-                        className='menu-popper-right'
-                        placement='right'
-                        >
-                        {({ TransitionProps }) => (
-                          <Grow {...TransitionProps}>
-                            <Paper>
-                              <ClickAwayListener onClickAway={event => handleCloseNested(event, anchorRef, toggleFunc)}>
-                                <List>
-                                  {
-                                    nested.map(nestedOption => (
-                                      <ListItem
-                                        className='btn'
-                                        button
-                                        component="a"
-                                        target='_blank'
-                                        key={nestedOption.label}
-                                        href={nestedOption.href}
-                                        style={{padding: '12px'}}
-                                        >
-                                        <ListItemIcon style={{minWidth: '35px'}}>
-                                          {nestedOption.icon}
-                                        </ListItemIcon>
-                                        <ListItemText primary={nestedOption.label} />
-                                      </ListItem>
-                                    ))
-                                  }
-                                </List>
-                              </ClickAwayListener>
-                            </Paper>
-                          </Grow>
-                        )}
-                      </Popper>
-                    }
-                  </React.Fragment>
-                )
-              })
-            }
-            {/* <Feedback mainButtonLabel={false} containerClassName='feedback-div' /> */}
-          </List>
-        </Drawer>
+          </Drawer>
 
       }
     </React.Fragment>
