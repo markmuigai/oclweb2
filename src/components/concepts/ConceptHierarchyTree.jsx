@@ -228,7 +228,8 @@ class ConceptHierarchyTree extends React.Component {
             mapType = that.props.hierarchyMeaning ? `Has ${rel} (${that.props.hierarchyMeaning})` : `Has ${rel}`
           const idLabel = mapType ? 'Map Type:' : 'ID:'
           const header = existInOCL ? '' : '<div class="gray-italics-small">(not defined in OCL)</div>';
-          const sourceHeader = d.data.target_source ? `<div><span class='gray'>Source: </span><span><b>${d.data.target_source}</b></span></div> ` : '';
+          const targetSource = d.data.target_source || that.getSourceName(d.data)
+          const sourceHeader = targetSource ? `<div><span class='gray'>Source: </span><span><b>${targetSource}</b></span></div> ` : '';
           let terminalHeader = '';
           if(!d.data.target_concept_code && isEmpty(d.data.children)) {
             if(d.data.uuid === d.parent.data.uuid)
@@ -238,6 +239,7 @@ class ConceptHierarchyTree extends React.Component {
             else if(d.data.terminal === null)
               terminalHeader = '<div class="gray-italics-small">(may be not terminal)</div> ';
           }
+          const retiredText = d.data.retired ? "<span class='retired-red'><i> (retired)</i></span>" : ""
           return (
             `<div>
               ${header}
@@ -250,6 +252,7 @@ class ConceptHierarchyTree extends React.Component {
               <div>
                 <span class='gray'>Name:</span>
                 <span><b>${d.data.display_name || d.data.target_concept_code}</b></span>
+                ${retiredText}
               </div>
             </div>`
           )}
@@ -291,7 +294,8 @@ class ConceptHierarchyTree extends React.Component {
         .select('text')
         .append('tspan')
         .attr('font-size', `${fontSize-1}px`)
-        .attr('fill', 'gray')
+        .attr('fill', d => d.data.retired ? 'red' : 'gray')
+        .attr('text-decoration', d => d.data.retired ? 'line-through' : 'none')
         .text(d => {
         let name;
         if(d.data.target_concept_code)
@@ -305,14 +309,14 @@ class ConceptHierarchyTree extends React.Component {
               name += '^'
           }
         }
-          return name + '  '
+          return name + (d.data.retired ? '' : '  ')
         })
       nodeEnter
         .select('text')
         .append('tspan')
         .attr('class', 'tspan-to-wrap')
         .attr('font-size', `${fontSize}px`)
-        .attr('fill', d => that.existsInOCL(d) ? (d._children ? BLUE : '#000') : 'rgba(0, 0, 0, 0.5)')
+        .attr('fill', d => d.data.retired ? 'red' : (that.existsInOCL(d) ? (d._children ? BLUE : '#000') : 'rgba(0, 0, 0, 0.5)'))
         .attr('x', d => d._children ? -6 : 6)
         .attr('dy', `1.2em`)
         .text(d => {

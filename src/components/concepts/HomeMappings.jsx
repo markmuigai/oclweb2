@@ -2,13 +2,13 @@ import React from 'react';
 import {
   Accordion, AccordionSummary, AccordionDetails, CircularProgress,
   Table, TableHead, TableRow, TableCell, TableBody, Tooltip, IconButton, Dialog, DialogContent, DialogTitle,
-  DialogActions, Button, Slide
+  DialogActions, Button, Slide, Chip
 } from '@mui/material';
 import {
   InfoOutlined as InfoIcon,
   FormatIndentIncrease as HierarchyIcon,
 } from '@mui/icons-material'
-import { get, isEmpty, forEach, map, find } from 'lodash';
+import { get, isEmpty, forEach, map, find, compact, flatten, values } from 'lodash';
 import { BLUE, WHITE } from '../../common/constants'
 import { generateRandomString, dropVersion } from '../../common/utils'
 import ConceptHomeMappingsTableRows from '../mappings/ConceptHomeMappingsTableRows';
@@ -59,16 +59,13 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent }) => {
+const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent, onIncludeRetiredToggle }) => {
   const [hierarchy, setHierarchy] = React.useState(false);
   const [cascadeFilters, setCascadeFilters] = React.useState({...DEFAULT_CASCADE_FILTERS});
+  const [includeRetired, setIncludeRetired] = React.useState(false)
   const conceptMappings = get(concept, 'mappings') || [];
   const reverseMappings = get(concept, 'reverseMappings') || [];
-  const count = isLoadingMappings ? null : conceptMappings.length;
   const tbHeadCellStyles = {padding: '8px', color: WHITE}
-  const orderedMappings = {}
-  groupMappings(orderedMappings, concept, conceptMappings, true)
-  groupMappings(orderedMappings, concept, reverseMappings, false)
   const hierarchyMeaning = get(source, 'hierarchy_meaning')
   const hierarchyMapType = isChild => {
     return (
@@ -87,20 +84,29 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
       </span>
     )
   }
-
   const onCascadeFilterChange = (attr, value) => setCascadeFilters({...cascadeFilters, [attr]: value})
-
   const onMapTypesFilterChange = newFilters => setCascadeFilters(newFilters)
-
   const onHierarchyViewToggle = event => {
     event.preventDefault()
     event.stopPropagation()
     setHierarchy(!hierarchy)
   }
-
+  const onRetiredToggle = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    setIncludeRetired(!includeRetired)
+    onIncludeRetiredToggle(!includeRetired)
+  }
   const noAssociations = isEmpty(conceptMappings) && isEmpty(reverseMappings)
+  const getMappings = () => {
+    let _mappings = {}
+    groupMappings(_mappings, concept, conceptMappings, true)
+    groupMappings(_mappings, concept, reverseMappings, false)
+    return _mappings
+  }
 
-  let style = {minHeight: '40px', height: '100%', cursor: 'inherit'}
+  const orderedMappings = getMappings()
+  const getCount = () => flatten(compact(flatten(map(values(orderedMappings), mapping => values(mapping))))).length
 
   return (
     <React.Fragment>
@@ -109,20 +115,27 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
           className='light-gray-bg less-paded-accordian-header'
           expandIcon={<span />}
           aria-controls="panel1a-content"
-          style={style}
+          style={{minHeight: '40px', height: '100%', cursor: 'inherit'}}
         >
           <span className='flex-vertical-center' style={{width: '100%', justifyContent: 'space-between'}}>
-            <TabCountLabel label='Associations' count={count} style={ACCORDIAN_HEADING_STYLES} />
+            <TabCountLabel label='Associations' count={getCount()} style={ACCORDIAN_HEADING_STYLES} />
             <span className='flex-vertical-center'>
               {
                 !noAssociations &&
-                <span>
-                  <Tooltip title='Visualize (Beta)'>
-                    <IconButton onClick={onHierarchyViewToggle} size='small' color={hierarchy ? 'primary' : 'default'}>
-                      <HierarchyIcon fontSize='inherit' />
-                    </IconButton>
+                  <React.Fragment>
+                    <span style={{marginRight: '10px'}}>
+                  <Tooltip title={includeRetired ? 'Exclude Retired' : 'Include Retired'} placement='top'>
+                    <Chip variant={includeRetired ? 'contained' : 'outlined'} style={{textTransform: 'none'}} onClick={onRetiredToggle} size='small' color='primary' label={includeRetired ? 'Exclude Retired' : 'Include Retired'} />
                   </Tooltip>
                 </span>
+                    <span>
+                      <Tooltip title='Visualize (Beta)'>
+                        <IconButton onClick={onHierarchyViewToggle} size='small' color={hierarchy ? 'primary' : 'default'}>
+                          <HierarchyIcon fontSize='inherit' />
+                        </IconButton>
+                      </Tooltip>
+                    </span>
+                    </React.Fragment>
               }
               <span className='flex-vertical-center' style={{marginLeft: '10px'}}>
                 <Tooltip title='The Associations section lists hierarchy and mapping associations from the same source.'>
@@ -152,6 +165,22 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                 </TableHead>
                 <TableBody>
                   {
+                    !isEmpty(get(orderedMappings, `children.hierarchy`)) &&
+                      <ConceptHierarchyRow
+                        source={source}
+                        concepts={get(orderedMappings, `children.hierarchy`)}
+                        mapType={hierarchyMapType(true)}
+                      />
+                  }
+                  {
+                    !isEmpty(get(orderedMappings, `parent.reverseHierarchy`)) &&
+                      <ConceptHierarchyRow
+                        source={source}
+                        concepts={get(orderedMappings, `parent.reverseHierarchy`)}
+                        mapType={hierarchyMapType(false)}
+                      />
+                  }
+                  {
                     map(orderedMappings, (oMappings, mapType) => {
                       const key = generateRandomString()
                       const hasDirectMappings = !isEmpty(oMappings.direct)
@@ -159,7 +188,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                         <React.Fragment key={key}>
                           {
                             hasDirectMappings &&
-                            <ConceptHomeMappingsTableRows
+                              <ConceptHomeMappingsTableRows
+                                concept={concept}
                               mappings={oMappings.direct}
                               mapType={mapType}
                             />
@@ -177,6 +207,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                           {
                             hasInDirectMappings &&
                             <ConceptHomeMappingsTableRows
+                              concept={concept}
                               mappings={oMappings.indirect}
                               mapType={mapType}
                               isIndirect
@@ -185,22 +216,6 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                         </React.Fragment>
                       )
                     })
-                  }
-                  {
-                    !isEmpty(get(orderedMappings, `children.hierarchy`)) &&
-                      <ConceptHierarchyRow
-                        source={source}
-                        concepts={get(orderedMappings, `children.hierarchy`)}
-                        mapType={hierarchyMapType(true)}
-                      />
-                  }
-                  {
-                    !isEmpty(get(orderedMappings, `parent.reverseHierarchy`)) &&
-                      <ConceptHierarchyRow
-                        source={source}
-                        concepts={get(orderedMappings, `parent.reverseHierarchy`)}
-                        mapType={hierarchyMapType(false)}
-                      />
                   }
                 </TableBody>
               </Table>
