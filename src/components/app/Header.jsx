@@ -173,7 +173,7 @@ const Header = props => {
             </IconButton>
           }
           <Typography variant="h6" className="col-sm-4" style={{ padding: '0 5px' }}>
-            <a className="no-anchor-styles" href={isProduction ? SITE_URL : '/'} rel="noopener noreferrer">
+            <a className="no-anchor-styles" href="/" rel="noopener noreferrer">
               {getLogo()}
             </a>
           </Typography>
