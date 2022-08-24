@@ -305,7 +305,7 @@ export const SERVER_CONFIGS = [
       site: {
         title: 'Kenya National Health Data Dictionary',
         hideOpenMRSApp: true,
-        logoURL: '/knhdd.svg',
+        logoURL: '/knhdd.png',
         footerText: 'Kenya Health Terminology Service. Powered by Open Concept Lab'
       },
     },
