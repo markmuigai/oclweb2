@@ -1,10 +1,11 @@
 import React from 'react';
 import { Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { cloneDeep, map, pullAt, isEmpty } from 'lodash';
+import { cloneDeep, map, pullAt, isEmpty, compact, filter } from 'lodash';
 import CommonAccordion from '../../common/CommonAccordion';
 import ExtrasForm from '../../common/ExtrasForm';
 import { arrayToObject } from '../../../common/utils';
+import TabCountLabel from '../TabCountLabel';
 
 const JSON_MODEL = {key: '', value: ''}
 
@@ -29,12 +30,21 @@ const CustomAttributes = props => {
   }
   const setFieldsForEdit = () => !isEmpty(props.repo.extras) && setExtras(map(props.repo.extras, (v, k) => ({key: k, value: v})))
   const defaultExpanded = props.edit && !isEmpty(props.repo.extras)
+  const count = filter(compact(extras), extra => extra.value || extra.key).length
 
   React.useEffect(() => props.edit && setFieldsForEdit(), [])
 
 
   return (
-    <CommonAccordion square title={configs.title} subTitle={configs.subTitle} defaultExpanded={defaultExpanded}>
+    <CommonAccordion
+      square
+      title={
+        <span className='flex-vertical-center'>
+          <TabCountLabel label={configs.title} count={count || false} />
+        </span>
+      }
+      subTitle={configs.subTitle}
+      defaultExpanded={defaultExpanded}>
       <React.Fragment>
         {
           map(extras, (extra, index) => (
@@ -48,8 +58,8 @@ const CustomAttributes = props => {
             </div>
           ))
         }
-        <div className='col-xs-12 no-side-padding' onClick={onAddExtras} style={{marginTop: '5px'}}>
-          <Button variant='text' startIcon={<AddIcon />} size='small'>
+        <div className='col-xs-12 no-side-padding' style={{marginTop: '8px'}}>
+          <Button variant='text' startIcon={<AddIcon />} size='small' onClick={onAddExtras}>
             Add Attribute
           </Button>
         </div>

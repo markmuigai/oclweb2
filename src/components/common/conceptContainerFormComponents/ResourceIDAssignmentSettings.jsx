@@ -2,9 +2,10 @@ import React from 'react';
 import {
   Select, ListItemText, MenuItem, FormControl, TextField, FormHelperText
 } from '@mui/material';
-import { merge, includes, some } from 'lodash'
+import { merge, includes, some, compact } from 'lodash'
 import FormTooltip from '../../common/FormTooltip';
 import CommonAccordion from '../../common/CommonAccordion';
+import TabCountLabel from '../TabCountLabel';
 
 
 const ResourceIDAssignmentSettings = props => {
@@ -42,6 +43,7 @@ const ResourceIDAssignmentSettings = props => {
     setAutoIDMappingExternalID(props.repo.autoid_concept_external_id || 'None')
     setAutoIDMappingExternalIDStartFrom(props.repo.autoid_mapping_external_id_start_from || 1)
   }
+  const count = compact([toValue(autoIDConceptID), toValue(autoIDConceptExternalID), toValue(autoIDMappingID), toValue(autoIDMappingExternalID)]).length
 
   React.useEffect(() => props.edit && setFieldsForEdit(), [])
 
@@ -70,13 +72,13 @@ const ResourceIDAssignmentSettings = props => {
                 disabled={props.edit}
               >
                 <MenuItem value='None'>
-                  <ListItemText primary="Enter Manually" secondary={<span style={{whiteSpace: 'pre-wrap'}}>The ID must be entered manually each time you create a new concept.</span>} />
+                  <ListItemText primary="Enter Manually" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID must be entered manually each time you create a new concept.</span>} />
                 </MenuItem>
                 <MenuItem value='uuid'>
-                  <ListItemText primary="UUID" secondary={<span style={{whiteSpace: 'pre-wrap'}}>The ID is is auto-assigned in the UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>} />
+                  <ListItemText primary="UUID" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID is is auto-assigned in the UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>} />
                 </MenuItem>
                 <MenuItem value='sequential'>
-                  <ListItemText primary="Sequential" secondary={<span style={{whiteSpace: 'pre-wrap'}}>The ID is auto-assigned in a numeric format, increasing by 1 for each new resource. You can pick what number to start with.</span>} />
+                  <ListItemText primary="Sequential" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID is auto-assigned in a numeric format, increasing by 1 for each new resource. You can pick what number to start with.</span>} />
                 </MenuItem>
               </Select>
               <FormHelperText>
@@ -109,7 +111,16 @@ const ResourceIDAssignmentSettings = props => {
   const defaultExpanded = props.edit && some([props.repo.autoid_concept_mnemonic, props.repo.autoid_concept_external_id, props.repo.autoid_mapping_mnemonic !== 'sequential', props.repo.autoid_mapping_external_id])
 
   return (
-    <CommonAccordion square title={configs.title} subTitle={configs.subTitle} defaultExpanded={defaultExpanded}>
+    <CommonAccordion
+      square
+      defaultStyle
+      title={
+        <span className='flex-vertical-center'>
+          <TabCountLabel label={configs.title} count={count || false} />
+        </span>
+      }
+      subTitle={configs.subTitle}
+      defaultExpanded={defaultExpanded}>
       <React.Fragment>
         {
           Template('conceptID', configs.conceptID, autoIDConceptID, setAutoIDConceptID, 'None', autoIDConceptIDStartFrom, setAutoIDConceptIDStartFrom, configs.conceptIDStartFrom, 'OpenMRS recommends using "sequential" here.')

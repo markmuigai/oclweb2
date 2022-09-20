@@ -3,144 +3,14 @@ import alertifyjs from 'alertifyjs';
 import { Divider, Button } from '@mui/material';
 import { orderBy, map, merge, cloneDeep, get, isEmpty } from 'lodash';
 import APIService from '../../services/APIService';
-import { COLLECTION_TYPES } from '../../common/constants'
+import { COLLECTION_TYPES, WHITE } from '../../common/constants'
 import FormHeader from '../common/conceptContainerFormComponents/FormHeader';
 import NameAndDescription from '../common/conceptContainerFormComponents/NameAndDescription';
 import ConfigurationForm from '../common/conceptContainerFormComponents/ConfigurationForm';
+import LanguageForm from '../common/conceptContainerFormComponents/LanguageForm';
 import AdvanceSettings from '../common/conceptContainerFormComponents/AdvanceSettings';
+import CONFIG from './CollectionFormConfigs';
 
-const CONFIG = {
-  resource: 'collection',
-  title: 'Create a new collection',
-  editTitle: 'Edit Collection',
-  subTitle: 'A repository for content from a mix of sources',
-  nameAndDescription: {
-    title: 'Name and description',
-    subTitle: 'Choose a short code for your collection',
-    shortCode: {
-      label: 'Short Code',
-      tooltip: "Identifies the Collection. This is OCL's key identifier for the Collection, so keep it short and sweet but also unique and distinct. Alphanumeric characters plus @, hyphens, periods, and underscores are allowed."
-    },
-    shortName: {
-      label: 'Short Name',
-      tooltip: "Gives a shorter name for the Collection, such as a nickname or an abbreviation."
-    },
-    fullName: {
-      label: 'Full Name',
-      tooltip: "The fully spelled out name."
-    },
-    description: {
-      label: 'Description',
-      tooltip: "Descriptions are like a headline for your Collection. If you have lots of information, put it in the About page below."
-    },
-  },
-  configuration: {
-    title: 'Configuration',
-    subTitle: 'Choose a default language',
-    defaultLanguage: {
-      label: 'Default Language',
-      placeholder: 'Choose a default language',
-      tooltip: 'Select one language that your Collection will use the most. Other languages can be added as Supported Languages.',
-    },
-    supportedLanguages: {
-      label: 'Supported Languages',
-      tooltip: 'Other languages that may appear in your Collection.',
-    },
-    type: {
-      label: 'Select collection type',
-      tooltip: 'Select collection type',
-    },
-    customValidationSchema: {
-      label: 'Validation Schema',
-      tooltip: 'Helps OCL format the dictionary according to a custom schema',
-    },
-    publicAccess: {
-      label: 'Collection visibility - who can view your collection?',
-      tooltip: "This determines who can see your Collection's content. Set it to Private if your content should only be shown to authorized users or organizations."
-    },
-    canonicalURL: {
-      label: 'Canonical URL',
-      tooltip: "This provides a unique identifier for your Collection. It will allow you to leverage OCL's powerful collection management features using this Collection.",
-      helperText: 'Unique URL - formatted identifier for your Collection'
-    }
-  },
-  advanceSettings: {
-    title: 'Advance Settings',
-    fhirSettings: {
-      title: 'FHIR Settings',
-      subTitle: 'Ensure your collection is FHIR compliant with these fields',
-      publisher: {
-        label: 'Publisher',
-        tooltip: 'The name of the organization or individual that published the resource.'
-      },
-      jurisdiction: {
-        label: 'Jurisdiction',
-        tooltip: 'A legal or geographic region in which the resource is intended to be used.'
-      },
-      purpose: {
-        label: 'Purpose',
-        tooltip: 'Explanation of why this resource is needed and why it has been designed as it has.'
-      },
-      copyright: {
-        label: 'Copyright',
-        tooltip: 'A copyright statement relating to the resource and/or its contents. Copyright statements are generally legal restrictions on the use and publishing of the resource.'
-      },
-      identifier: {
-        label: 'Identifier',
-        tooltip: 'A formal identifier that is used to identify this code system when it is represented in other formats, or referenced in a specification, model, design or an instance.'
-      },
-      contact: {
-        label: 'Contact',
-        tooltip: 'Contact details to assist a user in finding and communicating with the publisher.'
-      },
-      revisionDate: {
-        label: 'Revision Date',
-        tooltip: 'The date (and optionally time) when the resource was published. The date must change when the business version changes and it must change if the status code changes. In addition, it should change when the substantive content of the code system changes.'
-      },
-      experimental: {
-        label: 'Experimental',
-        tooltip: 'A Boolean value to indicate that this resource is authored for testing purposes (or education/evaluation/marketing) and is not intended to be used for genuine usage.'
-      },
-      immutable: {
-        label: 'Immutable',
-        tooltip: 'If this is set to ‘true’, then no new versions of the content logical definition can be created. Note: Other metadata might still change.'
-      },
-    },
-    expansions: {
-      title: 'Expansions',
-      subTitle: 'Configure and control expansion computations',
-      autoexpandHEAD: {
-        label: 'Auto Expand HEAD',
-        tooltip: 'This determines if this Collection needs to be auto expanded or deferred.'
-      },
-    },
-    customAttributes: {
-      title: 'Custom Attributes',
-      subTitle: 'Manage your own Collection attributes',
-    },
-    about: {
-      title: 'About Page',
-      subTitle: 'Add a page containing rich text information about your Collection'
-    },
-    others: {
-      title: 'Other Collection Attributes',
-      website: {
-        label: 'Website',
-        tooltip: 'Link to an associated website for this Collection',
-      },
-      externalID: {
-        label: 'External ID',
-        tooltip: 'An identifier for the Collection that is external to OCL'
-      },
-      meta: {
-        label: 'Meta',
-      },
-      lockedDate: {
-        label: 'Locked Date'
-      }
-    }
-  }
-}
 
 const TYPES = orderBy(map(COLLECTION_TYPES, t => ({id: t, name: t})), 'name');
 
@@ -230,18 +100,22 @@ class CollectionForm extends React.Component {
     const { edit, owner, collection } = this.props
     return (
       <form>
-        <div className='col-xs-12' style={{marginBottom: '30px'}}>
+        <div className='col-xs-12 no-side-padding' style={{marginBottom: '30px', overflowX: 'hidden'}}>
           <FormHeader {...CONFIG} edit={edit} />
-          <NameAndDescription {...CONFIG} edit={edit} owner={owner} onChange={this.onChange} repo={collection} />
-          <Divider style={{width: '100%'}} />
-          <ConfigurationForm {...CONFIG} edit={edit} owner={owner} types={TYPES} onChange={this.onChange} repo={collection} />
-          <Divider style={{width: '100%'}} />
-          {
-            ((edit && !isEmpty(collection)) || !edit) &&
-              <AdvanceSettings {...CONFIG} edit={edit} owner={owner} onChange={this.onChange} repo={collection} />
-          }
-          <div className='col-xs-12 no-side-padding' style={{marginTop: '30px'}}>
-            <Button variant='contained' type='submit' onClick={this.onSubmit}>
+          <div className='col-xs-12'>
+            <NameAndDescription {...CONFIG} edit={edit} owner={owner} onChange={this.onChange} repo={collection} />
+            <Divider style={{width: '100%'}} />
+            <LanguageForm {...CONFIG} edit={edit} owner={owner} onChange={this.onChange} repo={collection} />
+            <Divider style={{width: '100%'}} />
+            <ConfigurationForm {...CONFIG} edit={edit} owner={owner} types={TYPES} onChange={this.onChange} repo={collection} />
+            <Divider style={{width: '100%'}} />
+            {
+              ((edit && !isEmpty(collection)) || !edit) &&
+                <AdvanceSettings {...CONFIG} edit={edit} owner={owner} onChange={this.onChange} repo={collection} />
+            }
+          </div>
+          <div className='col-xs-12' style={{position: 'fixed', background: WHITE, bottom: 0, zIndex: 1999}}>
+            <Button variant='contained' type='submit' onClick={this.onSubmit} style={{margin: '10px 0'}}>
               {edit ? 'Update Collection' : 'Create Collection'}
             </Button>
           </div>

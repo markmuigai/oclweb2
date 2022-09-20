@@ -1,19 +1,17 @@
 import React from 'react';
-import moment from 'moment';
 import {
   TextField
 } from '@mui/material';
-import { isObject, isEmpty, some } from 'lodash'
+import { isObject, isEmpty, some, compact } from 'lodash'
 import FormTooltip from '../../common/FormTooltip';
 import CommonAccordion from '../../common/CommonAccordion';
+import TabCountLabel from '../TabCountLabel';
 
 
 const Others = props => {
   const configs = props.advanceSettings.others
   const [website, setWebsite] = React.useState('')
   const [externalID, setExternalID] = React.useState('')
-  const [meta, setMeta] = React.useState('')
-  const [lockedDate, setLockedDate] = React.useState('')
   const [collectionReference, setCollectionReference] = React.useState('')
   const onChange = (id, value, setter) => {
     setter(value)
@@ -27,21 +25,19 @@ const Others = props => {
   const setFieldsForEdit = () => {
     setWebsite(toFormValue(props.repo.website))
     setExternalID(toFormValue(props.repo.external_id))
-    setMeta(toFormValue(props.repo.meta))
-    if(props.repo.locked_date)
-      setLockedDate(moment(props.repo.locked_date).format('YYYY-MM-DD'))
     setCollectionReference(toFormValue(props.repo.collectionReference))
   }
 
   React.useEffect(() => props.edit && setFieldsForEdit(), [])
-  const defaultExpanded = Boolean(props.edit && some([props.repo.website, toFormValue(props.repo.meta), props.repo.external_id, props.repo.locked_date, props.repo.collection_reference]))
+  const defaultExpanded = Boolean(props.edit && some([props.repo.website, props.repo.external_id, props.repo.collection_reference]))
+  const count = compact([website, externalID, collectionReference]).length
 
   const TextFieldTemplate = (id, config, value, setter, textType, InputLabelProps) => {
     return (
       <React.Fragment>
         {
           config &&
-            <div className='col-xs-12 no-side-padding' style={{display: 'inline-flex', alignItems: 'center', marginTop: '10px'}}>
+            <div className='col-xs-12 no-side-padding' style={{display: 'inline-flex', alignItems: 'center', marginTop: '20px'}}>
               <TextField
                 id={id}
                 fullWidth
@@ -63,12 +59,18 @@ const Others = props => {
   }
 
   return (
-    <CommonAccordion square title={configs.title} subTitle={configs.subTitle} defaultExpanded={defaultExpanded}>
+    <CommonAccordion
+      square
+      title={
+        <span className='flex-vertical-center'>
+          <TabCountLabel label={configs.title} count={count || false} />
+        </span>
+      }
+      subTitle={configs.subTitle}
+      defaultExpanded={defaultExpanded}>
       <React.Fragment>
-        {TextFieldTemplate('website', configs.website, website, setWebsite)}
+        {TextFieldTemplate('website', configs.website, website, setWebsite, 'url')}
         {TextFieldTemplate('external_id', configs.externalID, externalID, setExternalID)}
-        {TextFieldTemplate('meta', configs.meta, meta, setMeta)}
-        {TextFieldTemplate('locked_date', configs.lockedDate, lockedDate, setLockedDate, 'date', { shrink: true })}
         {TextFieldTemplate('collection_reference', configs.collectionReference, collectionReference, setCollectionReference)}
       </React.Fragment>
     </CommonAccordion>

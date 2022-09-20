@@ -3,9 +3,10 @@ import moment from 'moment';
 import {
   TextField, FormControlLabel, Checkbox
 } from '@mui/material';
-import { isObject, isEmpty, some } from 'lodash'
+import { isObject, isEmpty, some, compact } from 'lodash'
 import FormTooltip from '../../common/FormTooltip';
 import CommonAccordion from '../../common/CommonAccordion';
+import TabCountLabel from '../TabCountLabel';
 
 
 const FHIRSettings = props => {
@@ -17,7 +18,9 @@ const FHIRSettings = props => {
   const [identifier, setIdentifier] = React.useState('')
   const [contact, setContact] = React.useState('')
   const [contentType, setContentType] = React.useState('')
+  const [meta, setMeta] = React.useState('')
   const [revisionDate, setRevisionDate] = React.useState('')
+  const [lockedDate, setLockedDate] = React.useState('')
   const [experimental, setExperimental] = React.useState(false)
   const [caseSensitive, setCaseSensitive] = React.useState(false)
   const [compositional, setCompositional] = React.useState(false)
@@ -39,10 +42,13 @@ const FHIRSettings = props => {
     setCopyright(props.repo.copyright || '')
     setIdentifier(toFormValue(props.repo.identifier) || '')
     setContact(toFormValue(props.repo.contact) || '')
+    setMeta(toFormValue(props.repo.meta) || '')
     if(props.repo.content_type)
       setContentType(props.repo.content_type || '') //for source
     if(props.repo.revision_date)
       setRevisionDate(moment(props.repo.revision_date).format('YYYY-MM-DD'))
+    if(props.repo.locked_date)
+      setLockedDate(moment(props.repo.locked_date).format('YYYY-MM-DD'))
     setExperimental(props.repo.experimental || false)
     setCaseSensitive(props.repo.case_sensitive || false)
     setCompositional(props.repo.compositional || false)
@@ -51,14 +57,15 @@ const FHIRSettings = props => {
   }
 
   React.useEffect(() => props.edit && setFieldsForEdit(), [])
-  const defaultExpanded = props.edit && some([props.repo.publisher, toFormValue(props.repo.jurisdiction), props.repo.purpose, props.repo.copyright, toFormValue(props.repo.identifier), toFormValue(props.repo.contact), props.repo.contentType, props.repo.revisionDate, props.repo.experimental, props.repo.caseSensitive, props.repo.compositional, props.repo.versionNeeded, props.repo.immutable])
+  const defaultExpanded = props.edit && some([props.repo.publisher, toFormValue(props.repo.jurisdiction), props.repo.purpose, props.repo.copyright, toFormValue(props.repo.identifier), toFormValue(props.repo.contact), props.repo.contentType, toFormValue(props.repo.meta), props.repo.revision_date, props.repo.locked_date, props.repo.experimental, props.repo.caseSensitive, props.repo.compositional, props.repo.version_needed, props.repo.immutable])
+  const count = compact([publisher, jurisdiction, purpose, copyright, identifier, contact, contentType, meta, revisionDate, lockedDate, experimental, caseSensitive, compositional, versionNeeded, immutable]).length
 
   const TextFieldTemplate = (id, config, value, setter, textType, InputLabelProps) => {
     return (
       <React.Fragment>
         {
           config &&
-            <div className='col-xs-12 no-side-padding' style={{display: 'inline-flex', alignItems: 'center', marginTop: '10px'}}>
+            <div className='col-xs-12 no-side-padding' style={{display: 'inline-flex', alignItems: 'center', marginTop: '20px'}}>
               <TextField
                 id={id}
                 fullWidth
@@ -83,7 +90,8 @@ const FHIRSettings = props => {
           config &&
             <div className='col-xs-12 no-side-padding' style={{display: 'inline-flex', alignItems: 'center', marginTop: '10px'}}>
               <FormControlLabel
-                control={<Checkbox name={id} checked={value} onChange={event => onChange(id, event.target.checked, setter)} />}
+                size='small'
+                control={<Checkbox size='small' name={id} checked={value} onChange={event => onChange(id, event.target.checked, setter)} />}
                 label={config.label}
               />
               <FormTooltip title={config.tooltip} style={{marginLeft: '10px'}} />
@@ -94,7 +102,16 @@ const FHIRSettings = props => {
   }
 
   return (
-    <CommonAccordion square defaultStyle title={configs.title} subTitle={configs.subTitle} defaultExpanded={defaultExpanded}>
+    <CommonAccordion
+      square
+      defaultStyle={props.resource === 'collection'}
+      title={
+        <span className='flex-vertical-center'>
+          <TabCountLabel label={configs.title} count={count || false} />
+        </span>
+      }
+      subTitle={configs.subTitle}
+      defaultExpanded={defaultExpanded}>
       <React.Fragment>
         {TextFieldTemplate('publisher', configs.publisher, publisher, setPublisher)}
         {TextFieldTemplate('jurisdiction', configs.jurisdiction, jurisdiction, setJurisdiction)}
@@ -103,7 +120,9 @@ const FHIRSettings = props => {
         {TextFieldTemplate('identifier', configs.identifier, identifier, setIdentifier)}
         {TextFieldTemplate('contact', configs.contact, contact, setContact)}
         {TextFieldTemplate('content_type', configs.contentType, contentType, setContentType)}
+        {TextFieldTemplate('meta', configs.meta, meta, setMeta)}
         {TextFieldTemplate('revision_date', configs.revisionDate, revisionDate, setRevisionDate, 'date', { shrink: true })}
+        {TextFieldTemplate('locked_date', configs.lockedDate, lockedDate, setLockedDate, 'date', { shrink: true })}
         {CheckboxFieldTemplate('experimental', configs.experimental, experimental, setExperimental)}
         {CheckboxFieldTemplate('case_sensitive', configs.caseSensitive, caseSensitive, setCaseSensitive)}
         {CheckboxFieldTemplate('compositional', configs.compositional, compositional, setCompositional)}
