@@ -1,4 +1,5 @@
 import React from 'react';
+import alertifyjs from 'alertifyjs';
 import {
   IconButton, Tooltip,
   List, ListItem, ListItemText, Chip, Divider, Button
@@ -7,12 +8,16 @@ import {
   ExitToApp as LogoutIcon, AccountCircle as AccountIcon,
 } from '@mui/icons-material';
 import { get } from 'lodash';
-import { getCurrentUser, getUserInitials, logoutUser } from '../../common/utils';
+import APIService from '../../services/APIService';
+import { getCurrentUser, getUserInitials, getAppliedServerConfig, canSwitchServer, logoutUser, isLoggedIn, isSSOEnabled } from '../../common/utils';
+import ServerConfigList from '../common/ServerConfigList';
 import PopperGrow from '../common/PopperGrow';
 
 const UserOptions = () => {
   const initials = getUserInitials()
   const user = getCurrentUser() || {}
+  let alertifyForLogout = false
+  let intervalId = null
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const handleToggle = () => setOpen((prevOpen) => !prevOpen);
@@ -29,6 +34,23 @@ const UserOptions = () => {
   };
   const username = get(user, 'username');
   const displayName = get(user, 'name') || username;
+  const serverConfig = getAppliedServerConfig();
+  const checkIfStillAuthenticated = () => {
+    APIService.version().get(null, null, null, true).then(res => {
+      if(get(res, 'response.status') === 401) {
+        if(!alertifyForLogout) {
+          alertifyForLogout = true
+          clearInterval(intervalId)
+          alertifyjs.error('Your token has been expired. You are logged out, please re-login.', 2, () => logoutUser(false, false))
+        }
+      }
+    })
+  }
+
+  React.useEffect(() => {
+    if(isLoggedIn() && isSSOEnabled())
+      intervalId = setInterval(checkIfStillAuthenticated, 2000)
+  }, [])
 
   return (
     <React.Fragment>

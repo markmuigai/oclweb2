@@ -1,15 +1,18 @@
 import React from 'react';
 import {
-  Select, ListItemText, MenuItem, FormControl, TextField, FormHelperText
+  Select, ListItemText, MenuItem, FormControl, TextField, FormHelperText, Alert, Collapse, IconButton,
+  InputLabel
 } from '@mui/material';
+import { Close as CloseIcon, InfoOutlined as InfoIcon } from '@mui/icons-material';
 import { merge, includes, some, compact } from 'lodash'
-import FormTooltip from '../../common/FormTooltip';
-import CommonAccordion from '../../common/CommonAccordion';
+import FormTooltip from '../FormTooltip';
+import CommonAccordion from '../CommonAccordion';
 import TabCountLabel from '../TabCountLabel';
 
 
 const ResourceIDAssignmentSettings = props => {
   const configs = props.advanceSettings.assigningIds
+  const [alert, setAlert] = React.useState(true)
   const [autoIDConceptID, setAutoIDConceptID] = React.useState('None')
   const [autoIDMappingID, setAutoIDMappingID] = React.useState('sequential')
   const [autoIDConceptExternalID, setAutoIDConceptExternalID] = React.useState('None')
@@ -56,29 +59,35 @@ const ResourceIDAssignmentSettings = props => {
     const autoIdExternalIDStartFromFieldID = isConceptID ? 'autoid_concept_external_id_start_from' : 'autoid_mapping_external_id_start_from'
     const fieldID = isExternalID ? autoExternalIDFieldID : autoIdFieldID
     const startFromID = isExternalID ? autoIdExternalIDStartFromFieldID : autoIdStartFromFieldID
+    const STYLE = {
+      fontSize: '12px',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: 'block',
+    }
     return (
       <div className='col-xs-12 no-side-padding' style={{marginBottom: '18px'}}>
         <div className='col-xs-12 no-side-padding'>
-          <div className='col-xs-12 no-side-padding form-text-gray' style={{marginBottom: '8px'}}>
-            {config.label}
-          </div>
           <div className='col-xs-12 no-side-padding form-text-gray flex-vertical-center'>
             <FormControl variant="outlined" fullWidth  size="small">
+              <InputLabel>{config.label}</InputLabel>
               <Select
                 required
+                label={config.label}
                 defaultValue={defaultValue}
                 value={value}
                 onChange={event => onChange(fieldID, event.target.value || '', setter)}
                 disabled={props.edit}
               >
                 <MenuItem value='None'>
-                  <ListItemText primary="Enter Manually" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID must be entered manually each time you create a new concept.</span>} />
+                  <ListItemText primary="Enter Manually" secondary={<span style={STYLE}>The ID must be entered manually each time you create a new concept.</span>} />
                 </MenuItem>
                 <MenuItem value='uuid'>
-                  <ListItemText primary="UUID" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID is is auto-assigned in the UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>} />
+                  <ListItemText primary="UUID" secondary={<span style={STYLE}>The ID is is auto-assigned in the UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>} />
                 </MenuItem>
                 <MenuItem value='sequential'>
-                  <ListItemText primary="Sequential" secondary={<span style={{whiteSpace: 'pre-wrap', fontSize: '12px'}}>The ID is auto-assigned in a numeric format, increasing by 1 for each new resource. You can pick what number to start with.</span>} />
+                  <ListItemText primary="Sequential" secondary={<span style={STYLE}>The ID is auto-assigned in a numeric format, increasing by 1 for each new resource. You can pick what number to start with.</span>} />
                 </MenuItem>
               </Select>
               <FormHelperText>
@@ -90,7 +99,7 @@ const ResourceIDAssignmentSettings = props => {
         </div>
         {
           value === 'sequential' &&
-            <div className='col-xs-12 no-side-padding flex-vertical-center' style={{marginTop: '15px'}}>
+            <div className='col-xs-12 flex-vertical-center' style={{marginTop: '15px'}}>
               <TextField
                 style={{width: '50%'}}
                 size='small'
@@ -98,7 +107,7 @@ const ResourceIDAssignmentSettings = props => {
                 onChange={event => onChange(startFromID, event.target.value || '', startFromSetter)}
                 type='number'
                 label={startFromConfig.label}
-                inputProps={{min: 1}}
+                inputProps={{min: 1, step: 1}}
                 disabled={props.edit}
               />
               <FormTooltip title={startFromConfig.tooltip} style={{marginLeft: '10px'}} />
@@ -122,18 +131,45 @@ const ResourceIDAssignmentSettings = props => {
       subTitle={configs.subTitle}
       defaultExpanded={defaultExpanded}>
       <React.Fragment>
-        {
-          Template('conceptID', configs.conceptID, autoIDConceptID, setAutoIDConceptID, 'None', autoIDConceptIDStartFrom, setAutoIDConceptIDStartFrom, configs.conceptIDStartFrom, 'OpenMRS recommends using "sequential" here.')
-        }
-        {
-          Template('conceptExternalID', configs.conceptExternalID, autoIDConceptExternalID, setAutoIDConceptExternalID, 'None', autoIDConceptExternalIDStartFrom, setAutoIDConceptExternalIDStartFrom, configs.conceptExternalIDStartFrom, 'OpenMRS recommends using "uuid" here')
-        }
-        {
-          Template('mappingID', configs.mappingID, autoIDMappingID, setAutoIDMappingID, 'sequential', autoIDMappingIDStartFrom, setAutoIDMappingIDStartFrom, configs.mappingIDStartFrom, 'OpenMRS recommends using "sequential" here')
-        }
-        {
-          Template('mappingExternalID', configs.mappingExternalID, autoIDMappingExternalID, setAutoIDMappingExternalID, 'None', autoIDMappingExternalIDStartFrom, setAutoIDMappingExternalIDStartFrom, configs.mappingExternalIDStartFrom, 'OpenMRS recommends using "uuid" here')
-        }
+        <div className='col-xs-12 no-side-padding'>
+          <Collapse in={alert}>
+            <Alert
+              severity="info"
+              icon={<InfoIcon fontSize='inherit' />}
+              action={
+                <IconButton color="inherit" size="small" onClick={() => setAlert(false)}>
+                  <CloseIcon fontSize="inherit" />
+                </IconButton>
+              }
+              sx={{ mb: 2 }}
+            >
+              {"OpenMRS recommends selecting 'Sequential' for IDs and selecting 'UUID' for External IDs"}
+            </Alert>
+          </Collapse>
+        </div>
+        <div className='col-xs-12 no-side-padding' style={{marginBottom: '10px'}}>
+          <div className='col-xs-12 no-side-padding form-text-gray' style={{marginBottom: '15px'}}>
+            IDs
+          </div>
+
+          {
+            Template('conceptID', configs.conceptID, autoIDConceptID, setAutoIDConceptID, 'None', autoIDConceptIDStartFrom, setAutoIDConceptIDStartFrom, configs.conceptIDStartFrom)
+          }
+          {
+            Template('mappingID', configs.mappingID, autoIDMappingID, setAutoIDMappingID, 'sequential', autoIDMappingIDStartFrom, setAutoIDMappingIDStartFrom, configs.mappingIDStartFrom)
+          }
+        </div>
+        <div className='col-xs-12 no-side-padding'>
+          <div className='col-xs-12 no-side-padding form-text-gray' style={{marginBottom: '15px'}}>
+            External IDs
+          </div>
+          {
+            Template('conceptExternalID', configs.conceptExternalID, autoIDConceptExternalID, setAutoIDConceptExternalID, 'None', autoIDConceptExternalIDStartFrom, setAutoIDConceptExternalIDStartFrom, configs.conceptExternalIDStartFrom)
+          }
+          {
+            Template('mappingExternalID', configs.mappingExternalID, autoIDMappingExternalID, setAutoIDMappingExternalID, 'None', autoIDMappingExternalIDStartFrom, setAutoIDMappingExternalIDStartFrom, configs.mappingExternalIDStartFrom)
+          }
+        </div>
       </React.Fragment>
     </CommonAccordion>
   )

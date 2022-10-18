@@ -32,13 +32,15 @@ const CONFIG = {
     },
     supportedLanguages: {
       label: 'Supported Languages',
+      placeholder: 'Choose Supported languages',
       tooltip: 'Other languages that may be used in your Source.',
     },
  },
   configuration: {
     title: 'Configuration',
     type: {
-      label: 'Select source type',
+      label: 'Source type',
+      placeholder: 'Select source type',
       tooltip: 'The type of Source that you want to create. Note that some Source types have special meaning.',
     },
     customValidationSchema: {
@@ -69,11 +71,11 @@ const CONFIG = {
       subTitle: 'Manage how your source is represented as a FHIR resource',
       publisher: {
         label: 'Publisher',
-        tooltip: 'The name of the organization or individual that published the resource.'
+        tooltip: 'The name of the organization or individual responsible for the release and ongoing maintenance of the resource.'
       },
       jurisdiction: {
         label: 'Jurisdiction',
-        tooltip: 'A legal or geographic region in which the resource is intended to be used.'
+        tooltip: 'A legal or geographic region in which the resource is intended to be used. (Format: JSON)'
       },
       purpose: {
         label: 'Purpose',
@@ -85,11 +87,11 @@ const CONFIG = {
       },
       identifier: {
         label: 'Identifier',
-        tooltip: 'A formal identifier that is used to identify this code system when it is represented in other formats, or referenced in a specification, model, design or an instance.'
+        tooltip: 'A formal identifier that is used to identify this code system when it is represented in other formats, or referenced in a specification, model, design or an instance. (Format: JSON)'
       },
       contact: {
         label: 'Contact',
-        tooltip: 'Contact details to assist a user in finding and communicating with the publisher.'
+        tooltip: 'Contact details to assist a user in finding and communicating with the publisher. (Format: JSON)'
       },
       contentType: {
         label: 'Content Type',
@@ -97,7 +99,7 @@ const CONFIG = {
       },
       meta: {
         label: 'Meta',
-        tooltip: 'The metadata about the resource. This is content that is maintained by the infrastructure. Changes to the content might not always be associated with version changes to the resource.'
+        tooltip: 'The metadata about the resource. This is content that is maintained by the infrastructure. Changes to the content might not always be associated with version changes to the resource. (Format: JSON)'
       },
       revisionDate: {
         label: 'Revision Date',
@@ -128,7 +130,7 @@ const CONFIG = {
         tooltip: 'This determines if an ID is automatically assigned to new concepts.'
       },
       conceptExternalID: {
-        label: 'External Concept IDs',
+        label: 'Concept External IDs',
         tooltip: 'This determines if an external ID is automatically assigned to new concepts. External IDs are optional but can be useful for IDs from other systems.'
       },
       mappingID: {
@@ -136,7 +138,7 @@ const CONFIG = {
         tooltip: 'This determines if an ID is automatically assigned to new mappings.'
       },
       mappingExternalID: {
-        label: 'External Mapping IDs',
+        label: 'Mapping External IDs',
         tooltip: 'This determines if an external ID is automatically assigned to new mappings. External IDs are optional but can be useful for IDs from other systems.'
       },
       conceptIDStartFrom: {
