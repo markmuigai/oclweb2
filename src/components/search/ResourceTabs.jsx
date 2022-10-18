@@ -105,7 +105,7 @@ const ResourceTabs = props => {
           <Tab className='material-tab' label={getLabelComponent('sources', GREEN)} icon={<ListIcon fontSize='small' style={getIconStyles(2, GREEN)} />} style={getTabStyles(2, GREEN)} />
           <Tab className='material-tab' label={getLabelComponent('collections', GREEN)} icon={<LoyaltyIcon fontSize='small' style={getIconStyles(3, GREEN)} />} style={getTabStyles(3, GREEN)} />
           <Tab className='material-tab' label={getLabelComponent('organizations', ORANGE)} icon={<HomeIcon fontSize='small' style={getIconStyles(4, ORANGE)} />} style={getTabStyles(4, ORANGE)} />
-          <Tab className='material-tab' label={getLabelComponent('users', ORANGE)} icon={<PersonIcon fontSize='small' style={getIconStyles(5, ORANGE)}/>} style={getTabStyles(5, ORANGE)} />
+          {/* <Tab className='material-tab' label={getLabelComponent('users', ORANGE)} icon={<PersonIcon fontSize='small' style={getIconStyles(5, ORANGE)}/>} style={getTabStyles(5, ORANGE)} /> */}
         </Tabs>
       </AppBar>
     </div>
