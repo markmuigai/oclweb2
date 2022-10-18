@@ -2,15 +2,15 @@ import React from 'react';
 import {
   TableRow, TableCell, Chip, Tooltip
 } from '@mui/material';
-import { map, get } from 'lodash';
+import { map, get, forEach, orderBy } from 'lodash';
 import ExistsInOCLIcon from '../common/ExistsInOCLIcon';
 import DoesnotExistsInOCLIcon from '../common/DoesnotExistsInOCLIcon';
 import MappingOptions from './MappingOptions';
-import { getSiteTitle } from '../../common/utils';
+import { getSiteTitle, toParentURI } from '../../common/utils';
 
 const SITE_TITLE = getSiteTitle()
 
-const ConceptHomeMappingsTableRows = ({ mapType, mappings, isIndirect }) => {
+const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, isSelf }) => {
   const conceptCodeAttr = 'target_concept_code'
   const conceptCodeName = 'target_concept_name'
   const sourceAttr = 'target_source_name';
@@ -31,21 +31,36 @@ const ConceptHomeMappingsTableRows = ({ mapType, mappings, isIndirect }) => {
 
   const count = get(mappings, 'length') || 0
 
+  const getOrderedMappings = () => {
+    const parentURL = toParentURI(concept.url || concept.version_url)
+    const sameParentMappings = []
+    const differentParentMappings = []
+    forEach(mappings, mapping => {
+      if(mapping.target_concept_url && toParentURI(mapping.target_concept_url) === parentURL)
+        sameParentMappings.push(mapping)
+      else
+        differentParentMappings.push(mapping)
+    })
+    return [...orderBy(sameParentMappings, 'target_concept_name'), ...orderBy(differentParentMappings, ['target_source_name', 'target_concept_name'])]
+  }
+
   return (
     <React.Fragment>
       {
         mapType &&
         <TableRow hover>
           <TableCell align='left' rowSpan={count + 1} style={{paddingRight: '5px', verticalAlign: 'top', paddingTop: '7px'}}>
-            <Tooltip title={isIndirect ? 'Inverse Mappings' : 'Direct Mappings'}>
+            <Tooltip placement='left' title={isIndirect ? 'Inverse Mappings' : (isSelf ? 'Self Mapping' : 'Direct Mappings')}>
               <Chip
                 size='small'
                 variant='outlined'
                 color='default'
                 label={
-                  isIndirect ?
-                       <span><span>{mapType}</span><sup>-1</sup></span>:
-                       mapType
+                  <span>
+                    <span>{mapType}</span>
+                    {isIndirect && <sup>-1</sup>}
+                    {isSelf && <sup>∞</sup>}
+                  </span>
                 }
                 style={{border: 'none'}}
               />
@@ -54,7 +69,7 @@ const ConceptHomeMappingsTableRows = ({ mapType, mappings, isIndirect }) => {
         </TableRow>
       }
       {
-        map(mappings, mapping => {
+        map(getOrderedMappings(), mapping => {
           const targetURL = get(mapping, 'target_concept_url')
           let title;
           if(targetURL)
@@ -74,7 +89,7 @@ const ConceptHomeMappingsTableRows = ({ mapType, mappings, isIndirect }) => {
                       <DoesnotExistsInOCLIcon title={title} />
                     }
                   </span>
-                  <span>
+                  <span className={mapping.retired ? 'retired' : ''}>
                     { mapping[conceptCodeAttr] }
                   </span>
                 </span>
