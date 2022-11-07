@@ -11,9 +11,9 @@ import { getSiteTitle, toParentURI } from '../../common/utils';
 const SITE_TITLE = getSiteTitle()
 
 const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, isSelf }) => {
-  const conceptCodeAttr = 'target_concept_code'
-  const conceptCodeName = 'target_concept_name'
-  const sourceAttr = 'target_source_name';
+  const conceptCodeAttr = 'cascade_target_concept_code'
+  const conceptCodeName = 'cascade_target_concept_name'
+  const sourceAttr = 'cascade_target_source_name';
 
   const onDefaultClick = (event, targetURL) => {
     event.stopPropagation()
@@ -36,12 +36,12 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
     const sameParentMappings = []
     const differentParentMappings = []
     forEach(mappings, mapping => {
-      if(mapping.target_concept_url && toParentURI(mapping.target_concept_url) === parentURL)
+      if(mapping.cascade_target_concept_url && toParentURI(mapping.cascade_target_concept_url) === parentURL)
         sameParentMappings.push(mapping)
       else
         differentParentMappings.push(mapping)
     })
-    return [...orderBy(sameParentMappings, 'target_concept_name'), ...orderBy(differentParentMappings, ['target_source_name', 'target_concept_name'])]
+    return [...orderBy(sameParentMappings, 'cascade_target_concept_name'), ...orderBy(differentParentMappings, ['cascade_target_source_name', 'cascade_target_concept_name'])]
   }
 
   return (
@@ -70,7 +70,7 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
       }
       {
         map(getOrderedMappings(), mapping => {
-          const targetURL = get(mapping, 'target_concept_url')
+          const targetURL = get(mapping, 'cascade_target_concept_url')
           let title;
           if(targetURL)
             title = isIndirect ? `Source concept is defined in ${SITE_TITLE}` : `Target concept is defined in ${SITE_TITLE}`
@@ -79,7 +79,7 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
           const cursor = targetURL ? 'pointer' : 'not-allowed'
           return (
             <TableRow
-              hover key={mapping.uuid} onClick={event => onDefaultClick(event, targetURL)} style={{cursor: cursor}} className={targetURL ? 'underline-text' : ''}>
+              hover key={mapping.url} onClick={event => onDefaultClick(event, targetURL)} style={{cursor: cursor}} className={targetURL ? 'underline-text' : ''}>
               <TableCell align='left' className='ellipsis-text' style={{maxWidth: '200px'}}>
                 <span className='flex-vertical-center' style={{paddingTop: '7px'}}>
                   <span className='flex-vertical-center' style={{marginRight: '4px'}}>

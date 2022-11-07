@@ -32,14 +32,14 @@ const None = () => {
 
 const groupMappings = (orderedMappings, concept, mappings, forward) => {
   forEach(mappings, resource => {
-    if(!(find(mappings, mapping => dropVersion(mapping.target_concept_url) === dropVersion(resource.url)))) {
+    if(!(find(mappings, mapping => dropVersion(mapping.cascade_target_concept_url) === dropVersion(resource.url)))) {
       let mapType = resource.map_type
       const isMapping = Boolean(mapType)
       if(!mapType)
         mapType = forward ? 'children' : 'parent'
       orderedMappings[mapType] = orderedMappings[mapType] || {order: null, direct: [], indirect: [], unknown: [], hierarchy: [], reverseHierarchy: [], self: []}
-      const isSelfMapping = isMapping && dropVersion(concept.url) === dropVersion(resource.target_concept_url)
-      let _resource = isMapping ? {...resource, isSelf: isSelfMapping, target_concept_name: resource.target_concept_name || get(find(mappings, m => dropVersion(m.url) === dropVersion(resource.target_concept_url)), 'display_name')} : {...resource, target_concept_name: resource.display_name}
+      const isSelfMapping = isMapping && dropVersion(concept.url) === dropVersion(resource.cascade_target_concept_url)
+      let _resource = isMapping ? {...resource, isSelf: isSelfMapping, cascade_target_concept_name: resource.cascade_target_concept_name || get(find(mappings, m => dropVersion(m.url) === dropVersion(resource.cascade_target_concept_url)), 'display_name')} : {...resource, cascade_target_concept_name: resource.display_name}
       if(isSelfMapping) {
         if(!map(orderedMappings[mapType].self, 'id').includes(resource.id))
           orderedMappings[mapType].self.push(_resource)
@@ -60,6 +60,7 @@ const DEFAULT_CASCADE_FILTERS = {
   cascadeHierarchy: true,
   cascadeMappings: true,
   reverse: false,
+  returnMapTypes: undefined,
 }
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -119,7 +120,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
     <React.Fragment>
       <Accordion expanded style={{borderRadius: 'unset'}}>
         <AccordionSummary
-          className='light-gray-bg less-paded-accordian-header'
+          className='light-gray-bg less-paded-accordion-header'
           expandIcon={<span />}
           aria-controls="panel1a-content"
           style={{minHeight: '40px', height: '100%', cursor: 'inherit'}}

@@ -206,9 +206,9 @@ export const currentUserHasAccess = () => {
     return false;
 
   const currentUser = getCurrentUser();
-  if (ownerType === 'users')
-    return currentUser.username === owner;
-  if (ownerType === 'orgs')
+  if(ownerType === 'users')
+    return currentUser?.username === owner;
+  if(ownerType === 'orgs')
     return isSubscribedTo(owner);
 
   return false;
@@ -225,12 +225,12 @@ const handleLookupValuesResponse = (data, callback, attr) => {
 
 
 export const fetchLocales = (callback, includeRawName=false) => {
-  APIService.orgs('OCL').sources('Locales').appendToUrl('concepts/lookup/').get(null, null, {verbose: true}).then(response => {
+  APIService.locales().get(null, null, {verbose: true}).then(response => {
     const mapper = locale => {
-      let data = {id: locale.id, name: `${locale.display_name} [${locale.id}]`, uuid: locale.uuid}
+      let data = {id: locale.id, name: locale.display_name, uuid: locale.uuid, locale: locale.locale}
       if(includeRawName) {
         data.name = locale.display_name
-        data.displayName = `${locale.display_name} [${locale.id}]`
+        data.displayName = locale.display_name
       }
       return data
     }
@@ -422,8 +422,8 @@ export const getAppliedServerConfig = () => {
 }
 
 export const isServerSwitched = () => {
-  const selectedConfig = getSelectedServerConfig();
-  return selectedConfig && selectedConfig.url !== (window.API_URL || process.env.API_URL);
+  const selectedServer = getSelectedServerConfig()
+  return selectedServer && selectedServer.id !== getDefaultServerConfig()?.id;
 };
 
 export const getDefaultServerConfig = () => {
@@ -514,7 +514,7 @@ export const getServerConfigsForCurrentUser = () => {
   }
 
   eligible = compact([defaultConfig, appliedConfig, ...eligible]);
-  return uniqBy(eligible, 'url');
+  return uniqBy(eligible, 'id');
 }
 
 export const arrayToSentence = (arr, separator, lastSeparator = ' and ') => {
