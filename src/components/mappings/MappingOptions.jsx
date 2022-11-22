@@ -2,8 +2,11 @@ import React from 'react';
 import { Menu, MenuItem, MenuList, IconButton } from '@mui/material';
 import { MoreVert as MenuIcon } from '@mui/icons-material';
 import { map } from 'lodash';
+import { currentUserHasAccess } from '../../common/utils';
 
-const MappingOptions = ({ mapping }) => {
+const hasAccess = currentUserHasAccess()
+
+const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption }) => {
   const anchorRef = React.useRef(null);
   const [open, setOpen] = React.useState(false);
   const onMenuToggle = event => {
@@ -22,19 +25,33 @@ const MappingOptions = ({ mapping }) => {
     return false
   }
 
-  const compareConceptHref = `/concepts/compare?lhs=${mapping.from_concept_url}&rhs=${mapping.to_concept_url}`
   const getOptions = () => {
     const options = [{label: 'Open Mapping Details', href: mapping.url},]
     const currentURL = window.location.hash.split('?')[0].split('#')[1]
+    const toConcept = mapping?.from_concept_url ? concept : null
+    const fromConcept = mapping?.to_concept_url ? concept : null
+    const fromConceptURL = mapping.from_concept_url || fromConcept?.url
+    const toConceptURL = mapping?.to_concept_url || toConcept?.url
+    const compareConceptHref = `/concepts/compare?lhs=${fromConceptURL}&rhs=${toConceptURL}`
 
-    if(mapping.from_concept_url && mapping.from_concept_url !== currentURL)
-      options.push({label: 'Open From Concept', href: mapping.from_concept_url})
-    if(mapping.to_concept_url && mapping.to_concept_url !== currentURL)
-      options.push({label: 'Open To Concept', href: mapping.to_concept_url})
-    if(mapping.to_concept_url && mapping.from_concept_url)
+    if(fromConceptURL && fromConceptURL !== currentURL)
+      options.push({label: 'Open From Concept', href: fromConceptURL})
+    if(toConceptURL && toConceptURL !== currentURL)
+      options.push({label: 'Open To Concept', href: toConceptURL})
+    if(fromConceptURL && toConceptURL)
       options.push({label: 'Compare Concepts', href: compareConceptHref})
+    if(hasAccess && showNewMappingOption)
+      options.push({label: `Add new ${mapping.map_type} mapping`, onClick: onAddNewMappingClick })
 
     return options
+  }
+
+  const onAddNewMappingClick = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    setOpen(false)
+    onAddNewClick(mapping.map_type)
+    return false
   }
 
   return (
@@ -45,11 +62,18 @@ const MappingOptions = ({ mapping }) => {
       <Menu open={open} anchorEl={anchorRef.current} onClose={onMenuToggle}>
         <MenuList>
           {
-            map(getOptions(), (option, index) => (
-              <MenuItem key={index} component='a' href={`/#${option.href}`} onClick={event => onOptionClick(event, option)}>
-                {option.label}
-              </MenuItem>
-            ))
+            map(getOptions(), (option, index) => {
+              let __props = {}
+              if(option.href) {
+                __props.href = `/#${option.href}`
+                __props.component = 'a'
+              }
+              return (
+                <MenuItem key={index} onClick={event => option.onClick ? option.onClick(event, option) : onOptionClick(event, option)} {...__props}>
+                  {option.label}
+                </MenuItem>
+              )
+            })
           }
         </MenuList>
       </Menu>
