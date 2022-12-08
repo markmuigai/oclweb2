@@ -69,7 +69,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent, onIncludeRetiredToggle, onCreateNewMapping }) => {
+const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent, onIncludeRetiredToggle, onCreateNewMapping, mappedSources }) => {
   const [mappingForm, setMappingForm] = React.useState(false)
   const [hierarchy, setHierarchy] = React.useState(false);
   const [cascadeFilters, setCascadeFilters] = React.useState({...DEFAULT_CASCADE_FILTERS});
@@ -121,6 +121,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
 
   const _onCreateNewMapping = (payload, targetConcept, isDirect) => onCreateNewMapping(payload, targetConcept, isDirect, () => setMappingForm(false))
 
+  const suggested = compact([{...source, suggestionType: 'Current Source'}, ...map(mappedSources, _source => ({..._source, suggestionType: 'Mapped Source'}))])
+
   return (
     <React.Fragment>
       <Accordion expanded style={{borderRadius: 'unset'}}>
@@ -166,18 +168,21 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
               </div> :
             <div>
               {
-                noAssociations ?
+                noAssociations && !mappingForm ?
                   None() :
                   <Table size="small" aria-label="concept-home-mappings" className='nested-mappings'>
-                    <TableHead>
-                      <TableRow style={{backgroundColor: BLUE, color: WHITE}}>
-                        <TableCell align='left' style={tbHeadCellStyles}><b>Relationship</b></TableCell>
-                        <TableCell align='left' style={tbHeadCellStyles}><b>Code</b></TableCell>
-                        <TableCell align='left' style={tbHeadCellStyles}><b>Name</b></TableCell>
-                        <TableCell align='left' style={tbHeadCellStyles}><b>Source</b></TableCell>
-                        <TableCell align='right' />
-                      </TableRow>
-                    </TableHead>
+                    {
+                      !noAssociations &&
+                        <TableHead>
+                          <TableRow style={{backgroundColor: BLUE, color: WHITE}}>
+                            <TableCell align='left' style={tbHeadCellStyles}><b>Relationship</b></TableCell>
+                            <TableCell align='left' style={tbHeadCellStyles}><b>Code</b></TableCell>
+                            <TableCell align='left' style={tbHeadCellStyles}><b>Name</b></TableCell>
+                            <TableCell align='left' style={tbHeadCellStyles}><b>Source</b></TableCell>
+                            <TableCell align='right' />
+                          </TableRow>
+                        </TableHead>
+                    }
                     <TableBody>
                       {
                         map(orderedMappings, (oMappings, mapType) => {
@@ -193,6 +198,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                     mapType={mapType}
                                     isSelf
                                     onCreateNewMapping={onCreateNewMapping}
+                                    suggested={suggested}
                                   />
                               }
                             </React.Fragment>
@@ -228,6 +234,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                     mappings={oMappings.direct}
                                     mapType={mapType}
                                     onCreateNewMapping={onCreateNewMapping}
+                                    suggested={suggested}
                                   />
                               }
                             </React.Fragment>
@@ -248,6 +255,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                     mapType={mapType}
                                     isIndirect
                                     onCreateNewMapping={onCreateNewMapping}
+                                    suggested={suggested}
                                   />
                               }
                             </React.Fragment>
@@ -263,6 +271,7 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                 onClose={() => setMappingForm(false)}
                                 isDirect
                                 onSubmit={_onCreateNewMapping}
+                                suggested={suggested}
                               />
                             </TableCell>
                           </TableRow>

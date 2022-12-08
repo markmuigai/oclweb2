@@ -4,7 +4,7 @@ import Split from 'react-split'
 import { CircularProgress } from '@mui/material';
 import { get, isObject, isBoolean, has, flatten, values, isArray } from 'lodash';
 import APIService from '../../services/APIService';
-import { toParentURI } from '../../common/utils'
+import { toParentURI, currentUserHasAccess } from '../../common/utils'
 import NotFound from '../common/NotFound';
 import AccessDenied from '../common/AccessDenied';
 import PermissionDenied from '../common/PermissionDenied';
@@ -33,6 +33,7 @@ class ConceptHome extends React.Component {
       reverseMappings: [],
       collections: [],
       source: {},
+      mappedSources: [],
       openHierarchy: isBoolean(props.openHierarchy) ? props.openHierarchy : false,
       includeRetiredAssociations: false,
     }
@@ -118,7 +119,21 @@ class ConceptHome extends React.Component {
     const { concept } = this.state
 
     if(get(concept, 'url'))
-      APIService.new().overrideURL(toParentURI(concept.url)).get().then(response => this.setState({source: response.data}))
+      APIService
+      .new()
+      .overrideURL(toParentURI(concept.url))
+      .get(null, null, {includeSummary: true})
+      .then(response => this.setState({source: response.data}, () => {
+        if(this.isVersionedObject())
+          this.fetchParentMappedSources()
+      }))
+  }
+
+  fetchParentMappedSources() {
+    const { source } = this.state
+    if(source?.url) {
+      APIService.new().overrideURL(source.url).appendToUrl('mapped-sources/').get(null, null, {includeSummary: true}).then(response => this.setState({mappedSources: response.data}))
+    }
   }
 
   getHierarchy = () => this.setState({isLoadingHierarchy: true}, () => {
@@ -272,12 +287,13 @@ class ConceptHome extends React.Component {
     const {
       concept, versions, mappings, isLoadingMappings, isLoading,
       notFound, accessDenied, permissionDenied, hierarchy, openHierarchy, newChildren,
-      isLoadingHierarchy, collections, isLoadingCollections, source, reverseMappings
+      isLoadingHierarchy, collections, isLoadingCollections, source, reverseMappings, mappedSources
     } = this.state;
     const currentURL = this.getConceptURLFromPath()
     const isVersionedObject = this.isVersionedObject()
     const hasError = notFound || accessDenied || permissionDenied;
     const detailsMargin = this.getContentMarginTop()
+    const hasAccess = currentUserHasAccess()
     const conceptDetails = (
       <div style={isLoading ? {textAlign: 'center', marginTop: '40px'} : {}}>
         { isLoading && <CircularProgress color='primary' /> }
@@ -304,6 +320,7 @@ class ConceptHome extends React.Component {
                 scoped={this.props.scoped}
                 singleColumn={this.props.singleColumn}
                 source={source}
+                mappedSources={mappedSources}
                 concept={{...concept, mappings: mappings, collections: collections, reverseMappings: reverseMappings}}
                 isLoadingMappings={isLoadingMappings}
                 isLoadingCollections={isLoadingCollections}
@@ -311,7 +328,7 @@ class ConceptHome extends React.Component {
                 sourceVersion={get(this.props.match, 'params.version')}
                 parent={this.props.parent}
                 onIncludeRetiredAssociationsToggle={this.onIncludeRetiredAssociationsToggle}
-                onCreateNewMapping={isVersionedObject && this.props.scoped != 'collection'  ? this.onCreateNewMapping : false}
+                onCreateNewMapping={hasAccess && isVersionedObject && this.props.scoped != 'collection'  ? this.onCreateNewMapping : false}
               />
             </div>
           </React.Fragment>

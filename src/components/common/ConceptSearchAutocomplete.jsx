@@ -4,16 +4,17 @@ import {
 } from '@mui/icons-material';
 import { TextField, CircularProgress, ListItem, ListItemIcon, ListItemText, Divider, Typography } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
-import { get, debounce, orderBy } from 'lodash'
+import { get, debounce } from 'lodash'
 import APIService from '../../services/APIService';
 import { BLUE } from '../../common/constants';
+import AutocompleteLoading from './AutocompleteLoading';
 
-const ConceptSearchAutocomplete = ({onChange, label, id, required, minCharactersForSearch, size, parentURI, disabled}) => {
+const ConceptSearchAutocomplete = ({onChange, label, id, required, minCharactersForSearch, size, parentURI, disabled, value}) => {
   const minLength = minCharactersForSearch || 1;
   const [input, setInput] = React.useState('')
   const [open, setOpen] = React.useState(false)
   const [concepts, setConcepts] = React.useState([])
-  const [selected, setSelected] = React.useState(undefined)
+  const [selected, setSelected] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const isSearchable = input && input.length >= minLength;
   const handleInputChange = debounce((event, value, reason) => {
@@ -37,11 +38,18 @@ const ConceptSearchAutocomplete = ({onChange, label, id, required, minCharacters
     let service = parentURI ? APIService.new().overrideURL(parentURI).appendToUrl('concepts/') : APIService.concepts()
     setConcepts([])
     service.get(null, null, query).then(response => {
-      const concepts = orderBy(response.data, ['display_name'])
-      setConcepts(concepts)
+      setConcepts(response.data)
       setLoading(false)
     })
   }
+
+  React.useEffect(() => {
+    setSelected(value || '')
+    if(!value) {
+      setInput('')
+      setConcepts([])
+    }
+  }, [value])
 
   return (
     <Autocomplete
@@ -58,7 +66,11 @@ const ConceptSearchAutocomplete = ({onChange, label, id, required, minCharacters
       size={size || 'medium'}
       options={concepts}
       loading={loading}
-      loadingText={loading ? 'Loading...' : `Type atleast ${minLength} characters to search`}
+      loadingText={
+        loading ?
+          <AutocompleteLoading text={input} /> :
+        `Type atleast ${minLength} characters to search`
+      }
       noOptionsText={(isSearchable && !loading) ? "No results" : 'Start typing...'}
       getOptionLabel={option => option ? option.id : ''}
       fullWidth
@@ -99,9 +111,12 @@ const ConceptSearchAutocomplete = ({onChange, label, id, required, minCharacters
                   <Typography
                     sx={{ maxWidth: 'calc(100% - 90px)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     <span>{option.display_name}</span>
-                    <span style={{color: 'rgba(0, 0, 0, 0.6)', marginLeft: '5px'}}>
-                      <i>{`[${option.display_locale}]`}</i>
-                    </span>
+                    {
+                      option.display_locale &&
+                        <span style={{color: 'rgba(0, 0, 0, 0.6)', marginLeft: '5px'}}>
+                          <i>{`[${option.display_locale}]`}</i>
+                        </span>
+                    }
                   </Typography>
                 }
                 secondary={
