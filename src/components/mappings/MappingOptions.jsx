@@ -3,10 +3,11 @@ import { Menu, MenuItem, MenuList, IconButton } from '@mui/material';
 import { MoreVert as MenuIcon } from '@mui/icons-material';
 import { map } from 'lodash';
 import { currentUserHasAccess } from '../../common/utils';
+import { ACTION_RED } from '../../common/constants';
 
 const hasAccess = currentUserHasAccess()
 
-const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption }) => {
+const MappingOptions = ({ mapping, concept, onAddNewClick, onRemove, onReactivate, showNewMappingOption, isIndirect }) => {
   const anchorRef = React.useRef(null);
   const [open, setOpen] = React.useState(false);
   const onMenuToggle = event => {
@@ -33,6 +34,16 @@ const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption 
     const fromConceptURL = mapping.from_concept_url || fromConcept?.url
     const toConceptURL = mapping?.to_concept_url || toConcept?.url
     const compareConceptHref = `/concepts/compare?lhs=${fromConceptURL}&rhs=${toConceptURL}`
+    const addNewMapTypeMappingLabel = (
+      <span>
+        Add new
+        <span style={{margin: '0 5px'}}>
+          {mapping?.map_type}
+          {isIndirect && <sup>-1</sup>}
+        </span>
+        mapping
+      </span>
+    )
 
     if(fromConceptURL && fromConceptURL !== currentURL)
       options.push({label: 'Open From Concept', href: fromConceptURL})
@@ -41,7 +52,11 @@ const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption 
     if(fromConceptURL && toConceptURL)
       options.push({label: 'Compare Concepts', href: compareConceptHref})
     if(hasAccess && showNewMappingOption)
-      options.push({label: `Add new ${mapping.map_type} mapping`, onClick: onAddNewMappingClick })
+      options.push({label: addNewMapTypeMappingLabel, onClick: onAddNewMappingClick })
+    if(hasAccess && showNewMappingOption && !mapping.retired)
+      options.push({label: `Retire mapping`, onClick: onRemoveMappingClick, type: 'delete' })
+    if(hasAccess && showNewMappingOption && mapping.retired)
+      options.push({label: `Reactivate mapping`, onClick: onReactivateMappingClick, type: 'delete' })
 
     return options
   }
@@ -51,6 +66,22 @@ const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption 
     event.stopPropagation()
     setOpen(false)
     onAddNewClick(mapping.map_type)
+    return false
+  }
+
+  const onRemoveMappingClick = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    setOpen(false)
+    onRemove(mapping)
+    return false
+  }
+
+  const onReactivateMappingClick = event => {
+    event.preventDefault()
+    event.stopPropagation()
+    setOpen(false)
+    onReactivate(mapping)
     return false
   }
 
@@ -68,8 +99,10 @@ const MappingOptions = ({ mapping, concept, onAddNewClick, showNewMappingOption 
                 __props.href = `/#${option.href}`
                 __props.component = 'a'
               }
+              if(option.type === 'delete')
+                __props['style'] = {color: ACTION_RED}
               return (
-                <MenuItem key={index} onClick={event => option.onClick ? option.onClick(event, option) : onOptionClick(event, option)} {...__props}>
+                <MenuItem key={index} onClick={event => option.onClick ? option.onClick(event, option, mapping) : onOptionClick(event, option)} {...__props}>
                   {option.label}
                 </MenuItem>
               )

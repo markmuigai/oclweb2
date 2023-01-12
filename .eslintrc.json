@@ -202,7 +202,10 @@
           "forground",
           "eng",
           "sourcetoconcepts",
-          "sourcemappings"
+          "sourcemappings",
+          "upsert",
+          "Unmount",
+          "keydown"
         ],
         "skipIfMatch": [
           "http://[^s]*",
