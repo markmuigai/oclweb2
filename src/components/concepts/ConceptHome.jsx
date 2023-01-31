@@ -62,7 +62,12 @@ class ConceptHome extends React.Component {
       let URL = parent.url
       if(version && version !== 'HEAD')
         URL += version + '/'
+      else
+        URL
       URL += `concepts/${encodeURIComponent(concept.id)}/`
+      if(match?.params?.conceptVersion)
+        URL += `${match.params.conceptVersion}/`
+
       return URL
     }
 
@@ -132,6 +137,12 @@ class ConceptHome extends React.Component {
       .overrideURL(toParentURI(concept.url))
       .get(null, null, {includeSummary: true})
       .then(response => this.setState({source: response.data}, () => {
+        const { setParentResource, setParentItem, parentItem } = this.context
+        if(!parentItem) {
+          setParentItem(this.state.source)
+          setParentResource('source')
+        }
+
         if(this.isVersionedObject())
           this.fetchParentMappedSources()
       }))
@@ -427,7 +438,7 @@ class ConceptHome extends React.Component {
       </div>
     )
     return (
-      <div className='col-xs-12 home-container no-side-padding' style={this.props.scoped ? {background: '#f1f1f1'} : {}}>
+      <div id='resource-item-container' className='col-xs-12 home-container no-side-padding' style={this.props.scoped ? {background: '#f1f1f1'} : {}}>
         {
           openHierarchy ?
           <Split className='split' sizes={[25, 75]} minSize={50}>
