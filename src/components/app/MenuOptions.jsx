@@ -18,8 +18,9 @@ import {
   QuestionAnswer as ContactIcon
 } from '@mui/icons-material';
 import OpenMRSLogo from '../common/OpenMRSLogo';
+import { getAppliedServerConfig } from '../../common/utils';
 
-export const SITE_URL = 'https://openconceptlab.org/';
+export const SITE_URL = getAppliedServerConfig().info?.site?.url || 'https://openconceptlab.org/';
 const COMMUNITY_OPTIONS = [
   {
     label: 'Architecture Community Call',

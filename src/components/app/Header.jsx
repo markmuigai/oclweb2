@@ -180,7 +180,7 @@ const Header = props => {
       logo = (
         <img
           src={siteConfiguration.logoURL}
-          style={{ height: "56px", marginTop: "-10px" }}
+          style={{ width: "100%", marginTop: "-10px" }}
         />
       );
     return logo;
@@ -206,8 +206,8 @@ const Header = props => {
                 <MenuIcon />
               </IconButton>
           }
-          <Typography variant="h6" className="brand col-sm-1" style={{padding: '0 5px'}}>
-            <a className="no-anchor-styles" href={isProduction ? SITE_URL : '/'} rel="noopener noreferrer">
+          <Typography variant="h6" className="brand col-xs-3 col-sm-2 col-md-1" style={{padding: '0 5px'}}>
+            <a className="no-anchor-styles" href={isProduction ? SITE_URL : '/'} style={{display:"block"}} rel="noopener noreferrer">
               {getLogo()}
             </a>
           </Typography>
