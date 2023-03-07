@@ -671,7 +671,7 @@ export const getSiteTitle = () => get(getAppliedServerConfig(), 'info.site.title
 
 export const getRandomColor = () => `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
-export const logoutUser = (alert = true, redirectToLogin) => {
+export const logoutUser = (alert = true, redirectToLogin, forced) => {
   const clearTokens = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('id_token');
@@ -690,7 +690,11 @@ export const logoutUser = (alert = true, redirectToLogin) => {
       window.location.reload();
     }
   }
-  const logoutURL = getSSOLogoutURL()
+  let redirectURL;
+  if(forced) {
+    redirectURL = window.location.origin + '/#/accounts/login?next=' + (window.location.origin + '/'+ window.location.hash)
+  }
+  const logoutURL = getSSOLogoutURL(redirectURL)
   if(logoutURL) {
     clearTokens()
     window.location = logoutURL
@@ -807,21 +811,25 @@ export const isSSOEnabled = () => {
 }
 
 export const getLoginURL = returnTo => {
-  const redirectURL = window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
+  let redirectURL = returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
   const oidClientID = window.OIDC_RP_CLIENT_ID || process.env.OIDC_RP_CLIENT_ID
+
+  redirectURL = redirectURL.replace(/([^:]\/)\/+/g, "$1");
+
   if(isSSOEnabled())
     return `${getAPIURL()}/users/login/?client_id=${oidClientID}&state=fj8o3n7bdy1op5&nonce=13sfaed52le09&redirect_uri=${redirectURL}`
   let url = '/#/accounts/login'
   if(returnTo)
     url += `?returnTo=${returnTo}`
+
   return url
 }
 
-export const getSSOLogoutURL = () => {
-  const redirectURL = window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
+export const getSSOLogoutURL = returnTo => {
+  const redirectURL = returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
   const idToken = localStorage.id_token
   if(redirectURL && idToken)
-    return `${getAPIURL()}/users/logout/?&post_logout_redirect_uri=${redirectURL}&id_token_hint=${idToken}`
+    return `${getAPIURL()}/users/logout/?id_token_hint=${idToken}&post_logout_redirect_uri=${redirectURL}`
 }
 
 
@@ -834,3 +842,22 @@ export const urlSearchParamsToObject = urlSearchParams => {
 }
 
 export const toNumDisplay = number => number ? number.toLocaleString() : number
+
+
+export const getSiblings = elem => {
+
+	// Setup siblings array and get the first sibling
+	var siblings = [];
+	var sibling = elem.parentNode.firstChild;
+
+	// Loop through each sibling and push to the array
+	while (sibling) {
+		if (sibling.nodeType === 1 && sibling !== elem) {
+			siblings.push(sibling);
+		}
+		sibling = sibling.nextSibling
+	}
+
+	return siblings;
+
+};

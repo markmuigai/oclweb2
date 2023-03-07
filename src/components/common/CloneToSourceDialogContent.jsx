@@ -11,7 +11,7 @@ import CascadeParametersForm from './CascadeParametersForm';
 import ConceptTable from '../concepts/ConceptTable';
 import APIPreview from './APIPreview'
 
-const CloneToSourceDialogContent = ({onClose, onAdd, advancedSettings, toggleSettings, defaultParams, onParamsChange, sourceName, concepts, isAdding, result, onPreviewClick, payload, requestURL }) => {
+const CloneToSourceDialogContent = ({onClose, onAdd, advancedSettings, toggleSettings, defaultParams, onParamsChange, sourceName, concepts, isAdding, result, onPreviewClick, payload, requestURL, toSource }) => {
   return (
     <React.Fragment>
       <DialogContent>
@@ -35,16 +35,19 @@ const CloneToSourceDialogContent = ({onClose, onAdd, advancedSettings, toggleSet
             {
               advancedSettings &&
                 <div className='col-xs-12 no-side-padding' style={{margin: '15px 0'}}>
-                  <div className='col-xs-12 no-side-padding' style={{margin: '15px 0'}}>
+                  <div className='col-xs-12 no-side-padding'>
                     <DialogContentText style={{fontSize: '14px', marginBottom: '20px', marginTop: '-10px'}}>
                       Caution: changing these settings could yield an incomplete clone (e.g., missing answers or set members).
                     </DialogContentText>
                   </div>
                   <CascadeParametersForm
-                    fieldClasses='col-xs-4'
+                    concepts={concepts}
+                    fieldClasses='col-xs-6'
                     hiddenFields={['method', 'cascadeHierarchy', 'omitIfExistsIn']}
                     defaultParams={defaultParams}
                     onChange={onParamsChange}
+                    toSource={toSource}
+                    includeHeader
                   />
                 </div>
             }
@@ -56,7 +59,7 @@ const CloneToSourceDialogContent = ({onClose, onAdd, advancedSettings, toggleSet
           </DialogContentText>
         </div>
         <div className='col-xs-12 no-side-padding' style={{marginTop: '10px'}}>
-          <ConceptTable concepts={concepts} showProgress={isAdding} showStatus={isAdding || result} visualFilters={defaultParams} onPreviewClick={onPreviewClick} />
+          <ConceptTable toSource={toSource} concepts={concepts} showProgress={isAdding} showStatus={isAdding || result} visualFilters={defaultParams} onPreviewClick={onPreviewClick} />
         </div>
 
         <div className='col-xs-12 no-side-padding' style={{marginTop: '10px'}}>

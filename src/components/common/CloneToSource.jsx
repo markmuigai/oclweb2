@@ -109,12 +109,17 @@ class CloneToSource extends React.Component {
     return concepts
   }
 
-  fetchPreviewResults = () => {
+  fetchPreviewResults = isCloned => {
     const { previewConcept, previewResults, params, selectedSource } = this.state
-    if(previewConcept && isEmpty(previewResults[previewConcept.url])) {
-      APIService.new().overrideURL(previewConcept.url).appendToUrl('$cascade/').get(null, null, {...params, omitIfExistsIn: selectedSource?.url, view: 'flat', listing: true, includeSelf: false}).then(response => {
+    if(previewConcept && isCloned && previewResults[previewConcept.url])
+      this.setState({previewConcept: {...previewConcept, previewBundle: previewResults[previewConcept.url]}})
+    else if(previewConcept && isEmpty(previewResults[previewConcept.url])) {
+      let _params = {view: 'flat', listing: true}
+      if(!isCloned)
+        _params = {...params, omitIfExistsIn: selectedSource?.url, includeSelf: false, ..._params}
+      APIService.new().overrideURL(previewConcept.url).appendToUrl('$cascade/').get(null, null, _params).then(response => {
         this.setState({previewResults: {[previewConcept.url]: response.data}}, () => {
-          this.setState({previewConcept: find(this.getReferences(), {url: previewConcept.url})})
+          this.setState({previewConcept: isCloned ? {...previewConcept, previewBundle: response.data} : find(this.getReferences(), {url: previewConcept.url})})
         })
       })
     }
@@ -180,7 +185,7 @@ class CloneToSource extends React.Component {
 
   getSourceName = () => this.state.selectedSource ? `${this.state.selectedSource.owner}/${this.state.selectedSource.short_code}` : ''
 
-  onPreviewClick = concept => this.setState({previewConcept: concept}, this.fetchPreviewResults)
+  onPreviewClick = (concept, isCloned) => this.setState({previewConcept: concept}, () => this.fetchPreviewResults(isCloned))
 
   onPreviewClose = () => this.setState({previewConcept: false})
 
@@ -263,7 +268,7 @@ class CloneToSource extends React.Component {
           )}
         </Popper>
         <Dialog open={openDialog} onClose={this.handleDialogClose} scroll='paper' fullWidth maxWidth='md' disableEscapeKeyDown={isAdding}>
-          <DialogTitleWithCloseButton disabled={isAdding} onClose={this.handleDialogClose}>
+          <DialogTitleWithCloseButton disabled={isAdding} onClose={previewConcept ? null : this.handleDialogClose}>
             {
               previewConcept &&
                 <Button size='small' startIcon={<BackIcon fontSize='inherit'/>} onClick={this.onPreviewClose} style={{marginRight: '10px'}}>
@@ -292,6 +297,7 @@ class CloneToSource extends React.Component {
               onPreviewClick={this.onPreviewClick}
               payload={payload}
               requestURL={requestURL}
+              toSource={selectedSource}
             />
           }
         </Dialog>
