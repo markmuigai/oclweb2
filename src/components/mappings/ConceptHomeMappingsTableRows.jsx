@@ -7,11 +7,11 @@ import {
   ImportExport as SortIcon,
   ArrowUpward as UpIcon,
   ArrowDownward as DownIcon,
+  WarningAmber as WarningIcon,
+  LocalOffer as LocalOfferIcon
 } from '@mui/icons-material';
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { map, get, forEach, orderBy, filter, find, isNumber, has, isEmpty, some } from 'lodash';
-import ExistsInOCLIcon from '../common/ExistsInOCLIcon';
-import DoesnotExistsInOCLIcon from '../common/DoesnotExistsInOCLIcon';
+import { map, get, forEach, orderBy, filter, find, isNumber, has, isEmpty, some, maxBy } from 'lodash';
 import MappingOptions from './MappingOptions';
 import { getSiteTitle, toParentURI, getSiblings } from '../../common/utils';
 import MappingInlineForm from './MappingInlineForm';
@@ -22,7 +22,7 @@ const ORDER_BY = ['_sort_weight', 'cascade_target_source_name', 'cascade_target_
 
 const order = (mappings, is_default) => orderBy(mappings, is_default ? DEFAULT_ORDER_BY : ORDER_BY)
 
-const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, isSelf, onCreateNewMapping, suggested, onRemoveMapping, onReactivateMapping, onSortEnd }) => {
+const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, isSelf, onCreateNewMapping, suggested, onRemoveMapping, onReactivateMapping, onSortEnd, onClearSortWeight, onAssignSortWeight }) => {
   const [oMappings, setMappings] = React.useState([])
   const [form, setForm] = React.useState(false)
   const [addNewMapType, setAddNewMapType] = React.useState('')
@@ -124,7 +124,10 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
 
     if(result.source.index !== result.destination.index) {
       const newMappings = reorderMappings(result.source.index, result.destination.index)
-      onSortEnd(filter(newMappings, mapping => mapping._sort_weight !== mapping._initial_assigned_sort_weight), filter(newMappings, mapping => mapping._sort_weight === mapping._initial_assigned_sort_weight))
+      if(find(newMappings, mapping => mapping.sort_weight !== mapping._sort_weight && mapping._sort_weight !== mapping._initial_assigned_sort_weight))
+        onSortEnd(newMappings)
+      else
+        onSortEnd([])
     }
   }
 
@@ -145,7 +148,9 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
 
   React.useEffect(() => isEmpty(oMappings) && setMappings(getOrderedMappings()), [mappings])
 
-  const hasAnyCustomSortMapping = oMappings.length > 1 && Boolean(find(oMappings, mapping => isNumber(mapping.sort_weight)))
+  const mappingsWithSortWeightCount = oMappings.length > 1 ? filter(oMappings, mapping => isNumber(mapping.sort_weight)).length : 0
+  const allMappingsHaveSortWeight = oMappings.length === mappingsWithSortWeightCount
+  const isAnyUpdatedButUnsaved = find(oMappings, mapping => mapping._sort_weight !== mapping._initial_assigned_sort_weight)
 
   const getBadgeProps = (mapping, index) => {
     const isUpdated = mapping._sort_weight !== mapping._initial_assigned_sort_weight
@@ -153,13 +158,18 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
     const isMovedDown = Boolean(isUpdated && index > mapping._original_position)
     const badgeIcon = isMovedUp ? <UpIcon style={{fontSize: '10px'}} color='success' /> : (isMovedDown ? <DownIcon style={{fontSize: '10px'}} color='error' /> : 0)
     let badgeProps = {anchorOrigin: {horizontal: 'left', vertical: 'top'}}
-    //const hasExistingWeight = isNumber(mapping.sort_weight)
     if(isMovedDown || isMovedUp)
       badgeProps = {...badgeProps, badgeContent: badgeIcon, style: {background: 'transparent'}}
-    //else if(hasExistingWeight)
-      //badgeProps = {...badgeProps, variant: 'dot', invisible: false, color: 'primary'}
 
     return badgeProps
+  }
+
+  const tooltipTitle = allMappingsHaveSortWeight ? 'Custom sorting has been applied' : (mappingsWithSortWeightCount ? `Custom sorting has been applied to ${mappingsWithSortWeightCount} mappings.` : undefined)
+
+  const _onAssignSortWeight = mapping => {
+    let maxSortWeight = maxBy(oMappings, 'sort_weight')?.sort_weight
+    maxSortWeight = isNumber(maxSortWeight) ? maxSortWeight + 1 : 0
+    onAssignSortWeight(mapping, maxSortWeight)
   }
 
   return (
@@ -183,9 +193,11 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
               />
             </Tooltip>
             {
-              hasAnyCustomSortMapping &&
-                <Tooltip title='Custom sorting has been applied'>
-                  <SortIcon fontSize="small" style={{color: 'rgba(0, 0, 0, 0.54)'}} />
+              tooltipTitle &&
+                <Tooltip title={tooltipTitle}>
+                  <Badge color="warning" badgeContent={allMappingsHaveSortWeight ? undefined : mappingsWithSortWeightCount}>
+                    <SortIcon fontSize="small" style={{color: 'rgba(0, 0, 0, 0.54)'}} />
+                  </Badge>
                 </Tooltip>
             }
           </span>
@@ -235,12 +247,23 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
                                           </Badge>
                                         </span>
                                     }
+                                    {
+                                      Boolean(canSort && !isNumber(mapping.sort_weight) && !isUpdated && mappingsWithSortWeightCount) &&
+                                        <span className='flex-vertical-center' style={{marginRight: '4px'}}>
+                                          <Tooltip title='Mapping has no sort weight applied'>
+                                            <WarningIcon fontSize='small' />
+                                          </Tooltip>
+                                        </span>
+                                    }
                                     <span className='flex-vertical-center' style={{marginRight: '4px'}}>
-                                      {
-                                        targetURL ?
-                                          <ExistsInOCLIcon title={title} /> :
-                                        <DoesnotExistsInOCLIcon title={title} />
-                                      }
+                                      <Tooltip title={title}>
+                                        <LocalOfferIcon
+                                          color={targetURL ? 'primary': 'warning'}
+                                          fontSize='small'
+                                          style={{width: '12pt'}}
+                                        />
+
+                                        </Tooltip>
                                     </span>
                                     <span className={mapping.retired ? 'retired' : ''}>
                                       { mapping[conceptCodeAttr] }
@@ -262,6 +285,10 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
                                     onReactivate={onReactivateClick}
                                     showNewMappingOption={canAct}
                                     isIndirect={isIndirect}
+                                    canSort={canSort}
+                                    onClearSortWeight={onClearSortWeight}
+                                    onAssignSortWeight={_onAssignSortWeight}
+                                    disabled={isAnyUpdatedButUnsaved}
                                   />
                                 </TableCell>
                               </TableRow>

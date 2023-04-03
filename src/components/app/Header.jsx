@@ -169,10 +169,9 @@ const Header = props => {
   const env = getEnv()
   const isProduction = env === 'production';
   const hideLeftNav = get(siteConfiguration, 'noLeftMenu', false)
-  const hideOpenMRSApp = get(siteConfiguration, 'hideOpenMRSApp', false)
   const hideTermBrowserApp = get(siteConfiguration, 'hideTermBrowserApp', false)
   const hideImportApp = get(siteConfiguration, 'hideImportApp', false)
-  const hideAppsMenu = hideOpenMRSApp && hideImportApp && hideTermBrowserApp;
+  const hideAppsMenu = hideImportApp && hideTermBrowserApp;
   const getLogo = () => {
     let logo = getSiteTitle();
     if (get(siteConfiguration, "logoText")) logo = siteConfiguration.logoText;
@@ -231,7 +230,6 @@ const Header = props => {
                   {
                     !hideAppsMenu &&
                       <AppsMenu
-                        hideOpenMRSApp={hideOpenMRSApp}
                         hideTermBrowserApp={hideTermBrowserApp}
                         hideImportApp={hideImportApp}
                       />
@@ -334,7 +332,7 @@ const Header = props => {
                                 >
                                   {nestedOption.icon}
                                 </ListItemIcon>
-                                <ListItemText primary={nestedOption.label} />
+                                <ListItemText primary={nestedOption.label} secondary={nestedOption.deprecated ? 'deprecated' : undefined} style={nestedOption.deprecated ? {fontStyle: 'italic'} : {}} />
                               </ListItemButton>
                             ))
                           }

@@ -398,13 +398,12 @@ class Search extends React.Component {
     if(resetItems)
       newState.page = 1
 
-    if(counts) {
-      forEach(newState.results, resourceState => {
-        resourceState.isLoadingCount = true
-      })
-    }
+    if(counts)
+      forEach(newState.results, resourceState => resourceState.isLoadingCount = true)
+
     if(!this.props.fhir)
       newState.isURLUpdatedByActionChange = true
+
     this.setState(newState, () => {
       const {
         resource, searchStr, page, exactMatch, sortParams, updatedSince, limit,
@@ -452,9 +451,9 @@ class Search extends React.Component {
           this.onSearchResultsLoad(resource, response, resetItems)
           setTimeout(() => this.setState({isURLUpdatedByActionChange: false}), 1000)
           if(!noHeaders && facets && !fhir && resource !== 'references')
-            fetchFacets(_resource, queryParams, baseURL, this.onFacetsLoad)
+            fetchFacets(_resource, {...queryParams}, baseURL, this.onFacetsLoad)
           if(counts && !this.props.nested)
-            fetchCounts(_resource, queryParams, this.onCountsLoad)
+            fetchCounts(_resource, {...queryParams}, this.onCountsLoad)
         }
       )
     })
@@ -485,9 +484,7 @@ class Search extends React.Component {
     return url
   }
 
-  loadMore = () => {
-    this.fetchNewResults({page: this.state.page + 1}, false, false, true, false);
-  }
+  loadMore = () => this.fetchNewResults({page: this.state.page + 1}, false, false, true, false);
 
   onPageChange = page => {
     if(page !== this.state.page) {
@@ -856,11 +853,11 @@ class Search extends React.Component {
                         <span className='filter-chip'>
                           <Chip
                             icon={<HierarchyIcon fontSize='small' />}
-                                 size='small'
-                      onClick={this.onHierarchyViewChange}
-                                 label='Hierarchy'
-                                 color={hierarchy ? 'primary' : 'secondary'}
-                                 variant={hierarchy ? 'contained' : 'outlined'}
+                            size='small'
+                            onClick={this.onHierarchyViewChange}
+                            label='Hierarchy'
+                            color={hierarchy ? 'primary' : 'secondary'}
+                            variant={hierarchy ? 'contained' : 'outlined'}
                           />
                         </span>
                       }
@@ -869,12 +866,12 @@ class Search extends React.Component {
                         <span className='filter-chip'>
                           <Tooltip title='Copy Link to this results'>
                             <Chip
-                        onClick={this.onShareClick}
-                                icon={<ShareIcon fontSize='small' />}
-                                label='Share'
-                                color='secondary'
-                                variant='outlined'
-                                size={nested ? 'small' : 'medium'}
+                              onClick={this.onShareClick}
+                              icon={<ShareIcon fontSize='small' />}
+                              label='Share'
+                              color='secondary'
+                              variant='outlined'
+                              size={nested ? 'small' : 'medium'}
                             />
                           </Tooltip>
                         </span>

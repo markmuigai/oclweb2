@@ -1,7 +1,7 @@
 /*eslint no-process-env: 0*/
 import React from 'react';
 import { Route, Switch, withRouter } from 'react-router-dom';
-import { get } from 'lodash';
+import { get, isEmpty, forOwn, has } from 'lodash';
 import {
   isFHIRServer, isLoggedIn, setUpRecentHistory, getAppliedServerConfig, getSiteTitle,
   isDeprecatedBrowser, recordGAPageView
@@ -36,6 +36,8 @@ import { hotjar } from 'react-hotjar';
 import { OperationsContext } from './LayoutContext';
 import DeprecatedBrowser from './DeprecatedBrowser';
 import OIDLoginCallback from '../users/OIDLoginCallback';
+import APIService from '../../services/APIService';
+import OpenMRSDeprecationDialog from '../common/OpenMRSDeprecationDialog';
 
 
 const SITE_TITLE = getSiteTitle()
@@ -49,6 +51,7 @@ const AuthenticationRequiredRoute = ({component: Component, ...rest}) => (
 
 const App = props => {
   const { openOperations, menuOpen, setMenuOpen, setOpenOperations } = React.useContext(OperationsContext);
+  const [openOpenMRSDeprecationDialog, setOpenOpenMRSDeprecationDialog] = React.useState(false)
 
   // For recent history
   setUpRecentHistory(props.history);
@@ -84,7 +87,30 @@ const App = props => {
     }
   };
 
+  const fetchToggles = async () => {
+    return new Promise(resolve => {
+      APIService.toggles().get().then(response => {
+        if (!isEmpty(response.data)) {
+          forOwn(response.data, (value, key) => {
+            if (!has(window, key) || window[key] !== value) {
+              window[key] = value;
+            }
+          });
+        }
+        resolve();
+      });
+    });
+  }
+
+  const setUpOpenMRSDeprecationDialog = () => {
+    const isRedirectedFromDM = window.location.href.includes('?origin=openmrs')
+    setOpenOpenMRSDeprecationDialog(isRedirectedFromDM)
+  }
+
   React.useEffect(() => {
+    setUpOpenMRSDeprecationDialog()
+    if(!isFHIRServer())
+      fetchToggles()
     addLogoutListenerForAllTabs()
     recordGAPageView()
     setupHotJar()
@@ -116,6 +142,10 @@ const App = props => {
 
   return (
     <div>
+      {
+        openOpenMRSDeprecationDialog &&
+          <OpenMRSDeprecationDialog isOpen={openOpenMRSDeprecationDialog} />
+      }
       {
         isDeprecatedBrowser() && deprecatedBrowser &&
           <DeprecatedBrowser open onClose={() => setDeprecatedBrowser(false)} />

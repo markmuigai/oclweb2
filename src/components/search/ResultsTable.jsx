@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   TableContainer, Table, TableHead, TableBody, TableCell, TableRow,
   Collapse, IconButton, Box, Paper, Tabs, Tab, Checkbox, TableSortLabel, Tooltip,
-  CircularProgress, FormControlLabel, Switch
+  FormControlLabel, Switch, Skeleton
 } from '@mui/material';
 import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
@@ -18,7 +18,7 @@ import {
 import { TablePagination } from '@mui/material';
 import {
   map, startCase, get, without, uniq, includes, find, keys, values, isEmpty, filter, reject, has,
-  isFunction, compact, flatten, last, isArray
+  isFunction, compact, flatten, last, isArray, times
 } from 'lodash';
 import {
   BLUE, WHITE, COLOR_ROW_SELECTED, ORANGE, GREEN, EMPTY_VALUE
@@ -469,7 +469,10 @@ const ExpandibleRow = props => {
 
   const getOCLFHIRResourceURL = item => {
     const identifiers = flatten([get(item, 'resource.identifier', [])])
-    return '/' + compact(get(find(identifiers, ident => get(ident, 'system', '').match('fhir.')), 'value', '').split('/')).splice(0, 4).join('/')
+    let ident = find(identifiers, ident => get(ident, 'system', '').match('fhir.'))
+    if(!ident)
+      ident = find(identifiers, ident => get(ident, 'system', '').match('api.'))
+    return '/' + compact(get(ident, 'value', '').split('/')).splice(0, 4).join('/')
   };
 
   const fetchVersions = () => {
@@ -633,12 +636,12 @@ const ExpandibleRow = props => {
           <TableCell align='right' style={{width: '120px', padding: '2px', paddingRight: '10px'}}>
             {
               resourceDefinition.tagWaitAttribute && !has(item, resourceDefinition.tagWaitAttribute) ?
-              <CircularProgress style={{width: '20px', height: '20px'}} /> :
-              map(tags, tag => tag.text ? getTag(tag, item, hapi) : (
-                <Link key={tag.id} to='' onClick={event => navigateTo(event, item, isFunction(tag.hrefAttr) ? tag.hrefAttr : get(item, tag.hrefAttr))}>
-                  {getTag(tag, item, hapi)}
-                </Link>
-              ))
+                map(tags, tag => <span key={tag.id} style={{display: 'flex', justifyContent: 'flex-end', margin: '2px 0', marginRight: '10px'}}><Skeleton variant='circular' height={20} width={20} /></span>) :
+                map(tags, tag => tag.text ? getTag(tag, item, hapi) : (
+                  <Link key={tag.id} to='' onClick={event => navigateTo(event, item, isFunction(tag.hrefAttr) ? tag.hrefAttr : get(item, tag.hrefAttr))}>
+                    {getTag(tag, item, hapi)}
+                  </Link>
+                ))
             }
           </TableCell>
         }
@@ -862,8 +865,8 @@ const ResultsTable = (
                     {
                       selectedCount > 0 &&
                       <TableRow colSpan={selectionRowColumnsCount} style={{backgroundColor: 'rgba(0, 0, 0, 0.09)'}}>
-                        <TableCell colSpan={columnsCount} align='left' style={{backgroundColor: 'rgba(0, 0, 0, 0.09)'}}>
-                          <span className='flex-vertical-center' style={{paddingTop: '3px'}}>
+                        <TableCell colSpan={columnsCount} align='left' style={{backgroundColor: 'rgba(224, 224, 224, 1)'}}>
+                          <span className='flex-vertical-center'>
                             <span style={{margin: '0px 10px', whiteSpace: 'pre'}}>{selectedCount} Selected</span>
                             {
                               !asReference &&
@@ -882,11 +885,11 @@ const ResultsTable = (
                     <TableRow style={theadStyles}>
                       {
                         (isConceptContainer || isValueSet || isConceptMap) &&
-                        <TableCell style={theadStyles} />
+                          <TableCell style={{...theadStyles, top: selectedCount > 0 ? 40 : 0}} />
                       }
                       {
                         isSelectable &&
-                        <TableCell style={{maxWidth: '30px', padding: '2px', ...theadStyles}} align="center">
+                          <TableCell style={{maxWidth: '30px', padding: '2px', ...theadStyles, top: selectedCount > 0 ? 40 : 0}} align="center">
                           <Checkbox checked={isAllSelected} indeterminate={isSomeSelected} size='small' style={{color: theadTextColor, padding: '0px'}} onChange={onAllSelect} />
                         </TableCell>
                       }
@@ -898,7 +901,7 @@ const ResultsTable = (
                               key={column.id}
                               sortDirection={orderBy === column.id ? order : false}
                               align={column.align || 'left'}
-                              style={{color: theadTextColor, ...theadStyles}}>
+                              style={{color: theadTextColor, ...theadStyles, top: selectedCount > 0 ? 40 : 0}}>
                               {
                                 column.tooltip ?
                                 <Tooltip arrow placement='top' title={column.tooltip}>
@@ -924,7 +927,7 @@ const ResultsTable = (
                               }
                             </TableCell>
                           ) : (
-                            <TableCell key={column.id} align={column.align || 'left'} style={{color: theadTextColor, ...theadStyles}}>
+                            <TableCell key={column.id} align={column.align || 'left'} style={{color: theadTextColor, ...theadStyles, top: selectedCount > 0 ? 40 : 0}}>
                               {
                                 column.translation ?
                                   <span>
@@ -955,22 +958,29 @@ const ResultsTable = (
                       }
                       {
                         !isSelectable &&
-                        <TableCell style={theadStyles} />
+                          <TableCell style={{...theadStyles, top: selectedCount > 0 ? 40 : 0}} />
                       }
                       {
                         (resourceDefinition.expandible || shouldShowPin) &&
-                        <TableCell style={theadStyles} />
+                          <TableCell style={{...theadStyles, top: selectedCount > 0 ? 40 : 0}} />
                       }
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {
-                      isLoading ?
-                      <TableRow colSpan={selectionRowColumnsCount}>
-                        <TableCell colSpan={columnsCount} align='center'>
-                          <CircularProgress color="primary" disableShrink />
-                        </TableCell>
-                      </TableRow> : (
+                      isLoading ? (
+                        times(10, rowIndex => (
+                          <TableRow key={rowIndex}>
+                            {
+                              times(selectionRowColumnsCount, columnIndex => (
+                                <TableCell key={columnIndex} align='center' style={{paddingTop: '10px', paddingBottom: '10px'}}>
+                                    <Skeleton height={35} />
+                                </TableCell>
+                              ))
+                            }
+                          </TableRow>
+                        ))
+                      ) : (
                       map(results.items, (item, index) => (
                       <ExpandibleRow
                         key={item.uuid || item.id || index}

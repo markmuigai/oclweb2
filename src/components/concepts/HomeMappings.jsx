@@ -10,7 +10,7 @@ import {
   Add as AddIcon,
   WarningAmber as WarnIcon,
 } from '@mui/icons-material'
-import { get, isEmpty, forEach, map, find, compact, flatten, values, uniqBy, reject } from 'lodash';
+import { get, isEmpty, forEach, map, find, compact, flatten, values, uniqBy } from 'lodash';
 import { BLUE, WHITE } from '../../common/constants'
 import { generateRandomString, dropVersion } from '../../common/utils'
 import ConceptHomeMappingsTableRows from '../mappings/ConceptHomeMappingsTableRows';
@@ -64,7 +64,7 @@ const DEFAULT_CASCADE_FILTERS = {
   returnMapTypes: undefined,
 }
 
-const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent, onIncludeRetiredToggle, onCreateNewMapping, mappedSources, onRemoveMapping, onReactivateMapping, onUpdateMappingsSorting }) => {
+const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, parent, onIncludeRetiredToggle, onCreateNewMapping, mappedSources, onRemoveMapping, onReactivateMapping, onUpdateMappingsSorting, onClearSortWeight, onAssignSortWeight }) => {
   const [orderedMappings, setMappings] = React.useState({});
   const [updatedMappings, setUpdatedMappings] = React.useState([]);
   const [mappingForm, setMappingForm] = React.useState(false)
@@ -121,10 +121,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
 
   const suggested = compact([{...source, suggestionType: 'Current Source'}, ...map(mappedSources, _source => ({..._source, suggestionType: 'Mapped Source'}))])
 
-  const onSortEnd = onCreateNewMapping ? (updated, unchanged) => {
-    const unChangedMappingsVersionURLs = map(unchanged, 'version_url')
-    const newMappings = reject([...updatedMappings, ...updated], mapping => unChangedMappingsVersionURLs.includes(mapping.version_url))
-    setUpdatedMappings(uniqBy(newMappings, 'version_url'))
+  const onSortEnd = onUpdateMappingsSorting ? (updated) => {
+    setUpdatedMappings(uniqBy(updated, 'version_url'))
   } : false
 
   const onSortCancel = () => {
@@ -134,19 +132,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
 
   const onSortSave = () => {
     onUpdateMappingsSorting(updatedMappings)
-    const newMappings = {...orderedMappings}
-    forEach(newMappings, data => {
-      forEach([...data.direct, ...data.indirect, ...data.self], mapping => {
-        const _mapping = find(updatedMappings, {version_url: mapping.version_url})
-        mapping.sort_weight = _mapping?._sort_weight || mapping.sort_weight
-        mapping._sort_weight = undefined
-        mapping._initial_assigned_sort_weight = undefined
-      })
-    })
-    setMappings(newMappings)
     setUpdatedMappings([])
   }
-
 
   return (
     <React.Fragment>
@@ -225,6 +212,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                     onCreateNewMapping={_onCreateNewMapping}
                                     onRemoveMapping={onRemoveMapping}
                                     onReactivateMapping={onReactivateMapping}
+                                    onAssignSortWeight={onAssignSortWeight}
+                                    onClearSortWeight={onClearSortWeight}
                                     suggested={suggested}
                                     onSortEnd={onSortEnd}
                                   />
@@ -264,6 +253,8 @@ const HomeMappings = ({ source, concept, isLoadingMappings, sourceVersion, paren
                                     onCreateNewMapping={_onCreateNewMapping}
                                     onRemoveMapping={onRemoveMapping}
                                     onReactivateMapping={onReactivateMapping}
+                                    onAssignSortWeight={onAssignSortWeight}
+                                    onClearSortWeight={onClearSortWeight}
                                     suggested={suggested}
                                     onSortEnd={onSortEnd}
                                   />

@@ -1,64 +1,106 @@
 /*eslint no-process-env: 0*/
-import 'core-js/features/url-search-params';
-import React from 'react';
-import ReactGA from 'react-ga';
-import alertifyjs from 'alertifyjs';
-import moment from 'moment';
+import "core-js/features/url-search-params";
+import React from "react";
+import ReactGA from "react-ga";
+import alertifyjs from "alertifyjs";
+import moment from "moment";
 import {
-  filter, difference, compact, find, reject, intersectionBy, size, keys, omitBy, isEmpty,
-  get, includes, map, isArray, values, pick, sortBy, zipObject, orderBy, isObject, merge,
-  uniqBy, cloneDeep, isEqual, without, capitalize, last, nth, startCase
-} from 'lodash';
+  filter,
+  difference,
+  compact,
+  find,
+  reject,
+  intersectionBy,
+  size,
+  keys,
+  omitBy,
+  isEmpty,
+  get,
+  includes,
+  map,
+  isArray,
+  values,
+  pick,
+  sortBy,
+  zipObject,
+  orderBy,
+  isObject,
+  merge,
+  uniqBy,
+  cloneDeep,
+  isEqual,
+  without,
+  capitalize,
+  last,
+  nth,
+  startCase,
+} from "lodash";
 import {
-  DATE_FORMAT, DATETIME_FORMAT, OCL_SERVERS_GROUP, OCL_FHIR_SERVERS_GROUP, HAPI_FHIR_SERVERS_GROUP,
-  OPENMRS_URL, DEFAULT_FHIR_SERVER_FOR_LOCAL_ID,
-} from './constants';
-import APIService from '../services/APIService';
-import { SERVER_CONFIGS } from './serverConfigs';
+  DATE_FORMAT,
+  DATETIME_FORMAT,
+  OCL_SERVERS_GROUP,
+  OCL_FHIR_SERVERS_GROUP,
+  HAPI_FHIR_SERVERS_GROUP,
+  OPENMRS_URL,
+  DEFAULT_FHIR_SERVER_FOR_LOCAL_ID,
+} from "./constants";
+import APIService from "../services/APIService";
+import { SERVER_CONFIGS } from "./serverConfigs";
 
-export const currentPath = () => window.location.hash.split('?')[0];
+export const currentPath = () => window.location.hash.split("?")[0];
 
-export const isAtGlobalSearch = () => window.location.hash.includes('#/search') || isAtRoot();
+export const isAtGlobalSearch = () =>
+  window.location.hash.includes("#/search") || isAtRoot();
 
-export const isAtRoot = () => currentPath() === '#/';
+export const isAtRoot = () => currentPath() === "#/";
 
-export const formatDate = date => moment(date).format(DATE_FORMAT);
+export const formatDate = (date) => moment(date).format(DATE_FORMAT);
 
-export const formatDateTime = date => moment(date).format(DATETIME_FORMAT);
+export const formatDateTime = (date) => moment(date).format(DATETIME_FORMAT);
 
 export const formatWebsiteLink = (value, style, text) => {
   if (value && value.trim()) {
     let href = value.trim();
-    if (!href.startsWith('http://') && !href.startsWith('https://'))
-      href = 'https://' + href;
+    if (!href.startsWith("http://") && !href.startsWith("https://"))
+      href = "https://" + href;
 
     return (
       <a
-        target='_blank'
+        target="_blank"
         rel="noopener noreferrer"
         href={href}
         className="ellipsis-text"
-        style={merge({ maxWidth: '100px' }, (style || {}))}>
+        style={merge({ maxWidth: "100px" }, style || {})}
+      >
         {text || value.trim()}
       </a>
     );
   }
-  return '';
-}
+  return "";
+};
 
-export const getIndirectMappings = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url });
+export const getIndirectMappings = (mappings, concept_url) =>
+  filter(mappings, { to_concept_url: concept_url });
 
-export const getDirectMappings = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url });
+export const getDirectMappings = (mappings, concept_url) =>
+  filter(mappings, { from_concept_url: concept_url });
 
-export const getDirectExternalMappings = (mappings, concept_url) => filter(mappings, mapping => Boolean(mapping.from_concept_url === concept_url && mapping.external_id));
+export const getDirectExternalMappings = (mappings, concept_url) =>
+  filter(mappings, (mapping) =>
+    Boolean(mapping.from_concept_url === concept_url && mapping.external_id)
+  );
 
-export const getLinkedQuestions = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url, map_type: 'Q-AND-A' });
+export const getLinkedQuestions = (mappings, concept_url) =>
+  filter(mappings, { to_concept_url: concept_url, map_type: "Q-AND-A" });
 
-export const getLinkedAnswers = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url, map_type: 'Q-AND-A' });
+export const getLinkedAnswers = (mappings, concept_url) =>
+  filter(mappings, { from_concept_url: concept_url, map_type: "Q-AND-A" });
 
-export const getSetParents = (mappings, concept_url) => filter(mappings, { to_concept_url: concept_url, map_type: 'CONCEPT-SET' });
+export const getSetParents = (mappings, concept_url) =>
+  filter(mappings, { to_concept_url: concept_url, map_type: "CONCEPT-SET" });
 
-export const getSetMembers = (mappings, concept_url) => filter(mappings, { from_concept_url: concept_url, map_type: 'CONCEPT-SET' });
+export const getSetMembers = (mappings, concept_url) =>
+  filter(mappings, { from_concept_url: concept_url, map_type: "CONCEPT-SET" });
 
 export const getMappingsDistributionByMapType = (mappings, concept_url) => {
   const linkedQuestions = getLinkedQuestions(mappings, concept_url);
@@ -66,58 +108,86 @@ export const getMappingsDistributionByMapType = (mappings, concept_url) => {
   const setParents = getSetParents(mappings, concept_url);
   const setMembers = getSetMembers(mappings, concept_url);
   const directExternalMappings = getDirectExternalMappings(
-    difference(mappings, [...linkedAnswers, ...linkedQuestions, ...setParents, ...setMembers]),
+    difference(mappings, [
+      ...linkedAnswers,
+      ...linkedQuestions,
+      ...setParents,
+      ...setMembers,
+    ]),
     concept_url
   );
   const directInternalMappings = getDirectMappings(
-    difference(mappings, [...linkedAnswers, ...linkedQuestions, ...setParents, ...setMembers, ...directExternalMappings]),
+    difference(mappings, [
+      ...linkedAnswers,
+      ...linkedQuestions,
+      ...setParents,
+      ...setMembers,
+      ...directExternalMappings,
+    ]),
     concept_url
   );
   const indirectMappings = getIndirectMappings(
-    difference(mappings, [...linkedAnswers, ...linkedQuestions, ...setParents, ...setMembers, ...directExternalMappings, ...directInternalMappings]),
+    difference(mappings, [
+      ...linkedAnswers,
+      ...linkedQuestions,
+      ...setParents,
+      ...setMembers,
+      ...directExternalMappings,
+      ...directInternalMappings,
+    ]),
     concept_url
   );
 
   return {
-    'Linked Question': linkedQuestions,
-    'Linked Answers': linkedAnswers,
-    'Set Parent': setParents,
-    'Set Members': setMembers,
-    'Direct External Mapping': directExternalMappings,
-    'Direct Internal Mapping': directInternalMappings,
-    'Inverse Mapping': indirectMappings,
-  }
-}
+    "Linked Question": linkedQuestions,
+    "Linked Answers": linkedAnswers,
+    "Set Parent": setParents,
+    "Set Members": setMembers,
+    "Direct External Mapping": directExternalMappings,
+    "Direct Internal Mapping": directInternalMappings,
+    "Inverse Mapping": indirectMappings,
+  };
+};
 
 export const getAPIURL = () => {
   const savedConfigs = getSelectedServerConfig();
   /*eslint no-undef: 0*/
-  return get(savedConfigs, 'url') || window.API_URL || process.env.API_URL;
-}
+  return get(savedConfigs, "url") || window.API_URL || process.env.API_URL;
+};
 
-export const toFullURL = uri => window.location.origin + '/#' + uri;
+export const toFullURL = (uri) => window.location.origin + "/#" + uri;
 
-export const toFullAPIURL = uri => getAPIURL() + uri;
+export const toFullAPIURL = (uri) => getAPIURL() + uri;
 
-export const toRelativeURL = url => url.replace(getAPIURL(), '');
+export const toRelativeURL = (url) => url.replace(getAPIURL(), "");
 
-export const copyURL = url => {
-  copyToClipboard(url, 'Copied URL to clipboard!');
-}
+export const copyURL = (url) => {
+  copyToClipboard(url, "Copied URL to clipboard!");
+};
 
 export const copyToClipboard = (copyText, message) => {
-  if (copyText)
-    navigator.clipboard.writeText(copyText);
+  if (copyText) navigator.clipboard.writeText(copyText);
 
-  if (message)
-    alertifyjs.success(message);
-}
+  if (message) alertifyjs.success(message);
+};
 
-export const toParentURI = uri => uri.split('/').splice(0, 5).join('/') + '/';
+export const toParentURI = (uri) =>
+  uri
+    .split("/")
+    .splice(0, 5)
+    .join("/") + "/";
 
-export const toOwnerURI = uri => uri.split('/').splice(0, 3).join('/') + '/';
+export const toOwnerURI = (uri) =>
+  uri
+    .split("/")
+    .splice(0, 3)
+    .join("/") + "/";
 
-export const headFirst = versions => compact([find(versions, { version: 'HEAD' }), ...reject(versions, { version: 'HEAD' })]);
+export const headFirst = (versions) =>
+  compact([
+    find(versions, { version: "HEAD" }),
+    ...reject(versions, { version: "HEAD" }),
+  ]);
 
 export const currentUserToken = () => localStorage.token;
 
@@ -125,209 +195,261 @@ export const isLoggedIn = () => Boolean(currentUserToken());
 
 export const getCurrentUser = () => {
   const data = localStorage.user;
-  if (data)
-    return JSON.parse(data);
+  if (data) return JSON.parse(data);
 
   return null;
 };
 
-export const getCurrentUserOrgs = () => get(getCurrentUser(), 'subscribed_orgs');
+export const getCurrentUserOrgs = () =>
+  get(getCurrentUser(), "subscribed_orgs");
 
-export const getCurrentUserUsername = () => get(getCurrentUser(), 'username');
+export const getCurrentUserUsername = () => get(getCurrentUser(), "username");
 
-export const nonEmptyCount = (object, attributes) => size(intersectionBy(keys(omitBy(object, val => (isEmpty(val) || includes(['none', 'None'], val)))), attributes));
+export const nonEmptyCount = (object, attributes) =>
+  size(
+    intersectionBy(
+      keys(
+        omitBy(object, (val) => isEmpty(val) || includes(["none", "None"], val))
+      ),
+      attributes
+    )
+  );
 
-export const isCurrentUserMemberOf = orgId => Boolean(orgId && includes(map(getCurrentUserOrgs(), 'id'), orgId));
+export const isCurrentUserMemberOf = (orgId) =>
+  Boolean(orgId && includes(map(getCurrentUserOrgs(), "id"), orgId));
 
-export const defaultCreatePin = (resourceType, resourceId, service, callback) => {
+export const defaultCreatePin = (
+  resourceType,
+  resourceId,
+  service,
+  callback
+) => {
   if (service) {
-    service.post({ resource_type: resourceType, resource_id: resourceId }).then(response => {
-      if (get(response, 'error')) {
-        let error;
-        if (isArray(response.error) && !isEmpty(compact(response.error)))
-          error = compact(response.error)[0];
-        else
-          error = get(values(response.error), '0') || 'Something bad happened.';
-        alertifyjs.error(error);
-      } else if (callback && get(response, 'status') === 201)
-        callback(response.data);
-    });
+    service
+      .post({ resource_type: resourceType, resource_id: resourceId })
+      .then((response) => {
+        if (get(response, "error")) {
+          let error;
+          if (isArray(response.error) && !isEmpty(compact(response.error)))
+            error = compact(response.error)[0];
+          else
+            error =
+              get(values(response.error), "0") || "Something bad happened.";
+          alertifyjs.error(error);
+        } else if (callback && get(response, "status") === 201)
+          callback(response.data);
+      });
   }
-}
+};
 
 export const defaultDeletePin = (service, callback) => {
   if (service) {
-    service.delete().then(response => {
-      if (callback && get(response, 'status') === 204)
-        callback();
+    service.delete().then((response) => {
+      if (callback && get(response, "status") === 204) callback();
     });
   }
-}
+};
 
 export const isAdminUser = () => {
   const currentUser = getCurrentUser();
-  return get(currentUser, 'is_staff') || get(currentUser, 'is_superuser');
-}
+  return get(currentUser, "is_staff") || get(currentUser, "is_superuser");
+};
 
-export const isSuperuser = () => get(getCurrentUser(), 'is_superuser');
+export const isSuperuser = () => get(getCurrentUser(), "is_superuser");
 
-export const toObjectArray = obj => isEmpty(obj) ? [] : map(keys(obj), k => pick(obj, k));
+export const toObjectArray = (obj) =>
+  isEmpty(obj) ? [] : map(keys(obj), (k) => pick(obj, k));
 
 export const sortObjectBy = (obj, comparator) => {
-  const _keys = sortBy(keys(obj), key => comparator ? comparator(obj[key], key) : key);
-  return zipObject(_keys, map(_keys, key => obj[key]));
-}
+  const _keys = sortBy(keys(obj), (key) =>
+    comparator ? comparator(obj[key], key) : key
+  );
+  return zipObject(
+    _keys,
+    map(_keys, (key) => obj[key])
+  );
+};
 
-export const arrayToObject = arr => {
-  if (isEmpty(arr))
-    return {};
+export const arrayToObject = (arr) => {
+  if (isEmpty(arr)) return {};
 
   return arr.reduce((prev, curr) => {
-    if (curr.key)
-      prev[curr.key] = curr.value;
+    if (curr.key) prev[curr.key] = curr.value;
     return prev;
   }, {});
-}
+};
 
 export const currentUserHasAccess = () => {
-  if (!isLoggedIn())
-    return false;
-  if (isAdminUser())
-    return true;
+  if (!isLoggedIn()) return false;
+  if (isAdminUser()) return true;
 
-  const url = window.location.hash.replace('#/', '');
-  if (!url)
-    return false;
+  const url = window.location.hash.replace("#/", "");
+  if (!url) return false;
 
-  const url_parts = compact(url.split('/'));
+  const url_parts = compact(url.split("/"));
 
   const ownerType = url_parts[0];
   const owner = url_parts[1];
-  if (!owner || !ownerType)
-    return false;
+  if (!owner || !ownerType) return false;
 
   const currentUser = getCurrentUser();
-  if(ownerType === 'users')
-    return currentUser?.username === owner;
-  if(ownerType === 'orgs')
-    return isSubscribedTo(owner);
+  if (ownerType === "users") return currentUser?.username === owner;
+  if (ownerType === "orgs") return isSubscribedTo(owner);
 
   return false;
-}
+};
 
-export const isSubscribedTo = org => Boolean(org && includes(map(get(getCurrentUser(), 'subscribed_orgs'), 'id'), org));
+export const isSubscribedTo = (org) =>
+  Boolean(
+    org && includes(map(get(getCurrentUser(), "subscribed_orgs"), "id"), org)
+  );
 
-export const getCurrentURL = () => window.location.href.replace(new RegExp('/$'), '');
+export const getCurrentURL = () =>
+  window.location.href.replace(new RegExp("/$"), "");
 
 const handleLookupValuesResponse = (data, callback, attr) => {
-  const _attr = attr || 'id';
-  callback(orderBy(uniqBy(map(data, cc => ({ id: get(cc, _attr), name: get(cc, _attr) })), 'name')), 'name');
-}
+  const _attr = attr || "id";
+  callback(
+    orderBy(
+      uniqBy(
+        map(data, (cc) => ({ id: get(cc, _attr), name: get(cc, _attr) })),
+        "name"
+      )
+    ),
+    "name"
+  );
+};
 
+export const fetchLocales = (callback, includeRawName = false) => {
+  APIService.locales()
+    .get(null, null, { verbose: true })
+    .then((response) => {
+      const mapper = (locale) => {
+        let data = {
+          id: locale.id,
+          name: locale.display_name,
+          uuid: locale.uuid,
+          locale: locale.locale,
+        };
+        if (includeRawName) {
+          data.name = locale.display_name;
+          data.displayName = locale.display_name;
+        }
+        return data;
+      };
+      callback(orderBy(map(response.data, mapper), "displayName"));
+    });
+};
 
-export const fetchLocales = (callback, includeRawName=false) => {
-  APIService.locales().get(null, null, {verbose: true}).then(response => {
-    const mapper = locale => {
-      let data = {id: locale.id, name: locale.display_name, uuid: locale.uuid, locale: locale.locale}
-      if(includeRawName) {
-        data.name = locale.display_name
-        data.displayName = locale.display_name
-      }
-      return data
-    }
-    callback(orderBy(map(response.data, mapper), 'displayName'));
-  });
-}
-
-export const fetchConceptClasses = callback => {
-  APIService.orgs('OCL').sources('Classes').appendToUrl('concepts/lookup/')
+export const fetchConceptClasses = (callback) => {
+  APIService.orgs("OCL")
+    .sources("Classes")
+    .appendToUrl("concepts/lookup/")
     .get()
-    .then(response => handleLookupValuesResponse(response.data, callback));
-}
+    .then((response) => handleLookupValuesResponse(response.data, callback));
+};
 
-export const fetchMapTypes = callback => {
-  APIService.orgs('OCL').sources('MapTypes').appendToUrl('concepts/lookup/')
+export const fetchMapTypes = (callback) => {
+  APIService.orgs("OCL")
+    .sources("MapTypes")
+    .appendToUrl("concepts/lookup/")
     .get()
-    .then(response => handleLookupValuesResponse(response.data, callback));
-}
+    .then((response) => handleLookupValuesResponse(response.data, callback));
+};
 
-export const fetchDatatypes = callback => {
-  APIService.orgs('OCL').sources('Datatypes').appendToUrl('concepts/lookup/')
+export const fetchDatatypes = (callback) => {
+  APIService.orgs("OCL")
+    .sources("Datatypes")
+    .appendToUrl("concepts/lookup/")
     .get()
-    .then(response => handleLookupValuesResponse(response.data, callback));
-}
+    .then((response) => handleLookupValuesResponse(response.data, callback));
+};
 
-export const fetchNameTypes = callback => {
-  APIService.orgs('OCL').sources('NameTypes').appendToUrl('concepts/lookup/')
+export const fetchNameTypes = (callback) => {
+  APIService.orgs("OCL")
+    .sources("NameTypes")
+    .appendToUrl("concepts/lookup/")
     .get()
-    .then(response => handleLookupValuesResponse(response.data, callback));
-}
+    .then((response) => handleLookupValuesResponse(response.data, callback));
+};
 
-export const fetchDescriptionTypes = callback => {
-  APIService.orgs('OCL').sources('DescriptionTypes').appendToUrl('concepts/lookup/')
+export const fetchDescriptionTypes = (callback) => {
+  APIService.orgs("OCL")
+    .sources("DescriptionTypes")
+    .appendToUrl("concepts/lookup/")
     .get()
-    .then(response => handleLookupValuesResponse(response.data, callback));
-}
+    .then((response) => handleLookupValuesResponse(response.data, callback));
+};
 
 export const downloadObject = (obj, format, filename) => {
   const data = new Blob([obj], { type: format });
   downloadFromURL(window.URL.createObjectURL(data), filename);
-}
+};
 
 export const downloadFromURL = (url, filename) => {
-  const tempLink = document.createElement('a');
+  const tempLink = document.createElement("a");
   tempLink.href = url;
-  tempLink.setAttribute('download', filename);
+  tempLink.setAttribute("download", filename);
   tempLink.click();
-}
+};
 
-export const arrayToCSV = objArray => {
-  const array = typeof objArray !== 'object' ? JSON.parse(objArray) : objArray;
-  let str = `${Object.keys(array[0]).map(value => `"${value}"`).join(",")}` + '\r\n';
+export const arrayToCSV = (objArray) => {
+  const array = typeof objArray !== "object" ? JSON.parse(objArray) : objArray;
+  let str =
+    `${Object.keys(array[0])
+      .map((value) => `"${value}"`)
+      .join(",")}` + "\r\n";
 
   return array.reduce((str, next) => {
-    str += `${Object.values(next).map(value => isObject(value) ? `"${JSON.stringify(value)}"` : `"${value}"`).join(",")}` + '\r\n';
+    str +=
+      `${Object.values(next)
+        .map((value) =>
+          isObject(value) ? `"${JSON.stringify(value)}"` : `"${value}"`
+        )
+        .join(",")}` + "\r\n";
     return str;
   }, str);
-}
+};
 
-export const refreshCurrentUserCache = callback => {
-  APIService.user().get(null, null, { includeSubscribedOrgs: true, includeAuthGroups: true }).then(response => {
-    if (response.status === 200) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-      if (callback) callback(response);
-    }
-  });
-}
+export const refreshCurrentUserCache = (callback) => {
+  APIService.user()
+    .get(null, null, { includeSubscribedOrgs: true, includeAuthGroups: true })
+    .then((response) => {
+      if (response.status === 200) {
+        localStorage.setItem("user", JSON.stringify(response.data));
+        if (callback) callback(response);
+      }
+    });
+};
 
-export const replaceCurrentUserCacheWith = data => localStorage.setItem('user', JSON.stringify(data));
+export const replaceCurrentUserCacheWith = (data) =>
+  localStorage.setItem("user", JSON.stringify(data));
 
-export const formatByteSize = bytes => {
+export const formatByteSize = (bytes) => {
   if (bytes < 1024) return bytes + " bytes";
   else if (bytes < 1048576) return (bytes / 1024).toFixed(3) + " KB";
   else if (bytes < 1073741824) return (bytes / 1048576).toFixed(3) + " MB";
   else return (bytes / 1073741824).toFixed(3) + " GB";
 };
 
-
 export const memorySizeOf = (obj, format = true) => {
   var bytes = 0;
 
-  const sizeOf = obj => {
+  const sizeOf = (obj) => {
     if (obj !== null && obj !== undefined) {
       switch (typeof obj) {
-        case 'number':
+        case "number":
           bytes += 8;
           break;
-        case 'string':
+        case "string":
           bytes += obj.length * 2;
           break;
-        case 'boolean':
+        case "boolean":
           bytes += 4;
           break;
-        case 'object':
+        case "object":
           var objClass = Object.prototype.toString.call(obj).slice(8, -1);
-          if (objClass === 'Object' || objClass === 'Array') {
+          if (objClass === "Object" || objClass === "Array") {
             for (var key in obj) {
               if (!obj.hasOwnProperty(key)) continue;
               sizeOf(obj[key]);
@@ -339,146 +461,142 @@ export const memorySizeOf = (obj, format = true) => {
     return bytes;
   };
 
-
   const byteSize = sizeOf(obj);
 
-  if (format)
-    return formatByteSize(byteSize);
+  if (format) return formatByteSize(byteSize);
 
   return byteSize;
 };
 
-export const getCurrentUserCollections = callback => {
+export const getCurrentUserCollections = (callback) => {
   const username = getCurrentUserUsername();
-  if(username) {
-    APIService
-      .users(username)
+  if (username) {
+    APIService.users(username)
       .collections()
-      .get(null, null, {limit: 1000, includeSummary: true})
-      .then(response => isArray(response.data) ? callback(response.data) : false);
-    APIService
-      .users(username)
+      .get(null, null, { limit: 1000, includeSummary: true })
+      .then((response) =>
+        isArray(response.data) ? callback(response.data) : false
+      );
+    APIService.users(username)
       .orgs()
-      .appendToUrl('collections/')
-      .get(null, null, {limit: 1000, includeSummary: true})
-      .then(response => isArray(response.data) ? callback(response.data) : false);
+      .appendToUrl("collections/")
+      .get(null, null, { limit: 1000, includeSummary: true })
+      .then((response) =>
+        isArray(response.data) ? callback(response.data) : false
+      );
   }
-}
+};
 
-export const getCurrentUserSources = callback => {
+export const getCurrentUserSources = (callback) => {
   const username = getCurrentUserUsername();
-  if(username) {
-    APIService
-      .users(username)
+  if (username) {
+    APIService.users(username)
       .sources()
-      .get(null, null, {limit: 1000, includeSummary: true})
-      .then(response => isArray(response.data) ? callback(response.data) : false);
-    APIService
-      .users(username)
+      .get(null, null, { limit: 1000, includeSummary: true })
+      .then((response) =>
+        isArray(response.data) ? callback(response.data) : false
+      );
+    APIService.users(username)
       .orgs()
-      .appendToUrl('sources/')
-      .get(null, null, {limit: 1000, includeSummary: true})
-      .then(response => isArray(response.data) ? callback(response.data) : false);
+      .appendToUrl("sources/")
+      .get(null, null, { limit: 1000, includeSummary: true })
+      .then((response) =>
+        isArray(response.data) ? callback(response.data) : false
+      );
   }
-}
+};
 
 export const isValidPassword = (password, strength, minStrength = 3) => {
   return Boolean(
     password &&
-    strength >= minStrength &&
-    password.length >= 8 &&
-    password.match(new RegExp(/(?=.*[0-9])(?=.*[a-zA-Z])(?=\S+$)./g))
+      strength >= minStrength &&
+      password.length >= 8 &&
+      password.match(new RegExp(/(?=.*[0-9])(?=.*[a-zA-Z])(?=\S+$)./g))
   );
-}
+};
 
-export const getUserInitials = user => {
+export const getUserInitials = (user) => {
   user = user || getCurrentUser();
-  if (!user)
-    return '';
+  if (!user) return "";
 
-  let result = '';
-  const first_name = get(user, 'first_name', '').trim();
-  const last_name = get(user, 'last_name', '').trim();
+  let result = "";
+  const first_name = get(user, "first_name", "").trim();
+  const last_name = get(user, "last_name", "").trim();
   const username = user.username;
-  const hasValidFirstName = first_name && first_name !== '-';
-  const hasValidLastName = last_name && last_name !== '-';
+  const hasValidFirstName = first_name && first_name !== "-";
+  const hasValidLastName = last_name && last_name !== "-";
   if (!hasValidFirstName && !hasValidLastName && username)
     result = username.slice(0, 2);
-  if (hasValidFirstName)
-    result = first_name[0];
-  if (hasValidLastName)
-    result += last_name[0];
-  if (result.length == 1 && hasValidFirstName)
-    result += first_name[1];
+  if (hasValidFirstName) result = first_name[0];
+  if (hasValidLastName) result += last_name[0];
+  if (result.length == 1 && hasValidFirstName) result += first_name[1];
 
   return result.toUpperCase();
-}
+};
 
-export const jsonifySafe = data => {
-  if (!data)
-    return data;
+export const jsonifySafe = (data) => {
+  if (!data) return data;
 
   try {
     return JSON.parse(data);
   } catch (err) {
     return data;
   }
-}
+};
 
 export const getSelectedServerConfig = () => {
-  const serverConfig = localStorage.getItem('server');
-  if (serverConfig)
-    return JSON.parse(serverConfig);
-}
+  const serverConfig = localStorage.getItem("server");
+  if (serverConfig) return JSON.parse(serverConfig);
+};
 
 export const getAppliedServerConfig = () => {
   const selectedConfig = getSelectedServerConfig();
 
-  if (selectedConfig)
-    return selectedConfig;
+  if (selectedConfig) return selectedConfig;
 
   const APIURL = window.API_URL || process.env.API_URL;
   return find(SERVER_CONFIGS, { url: APIURL });
-}
+};
 
 export const isServerSwitched = () => {
-  const selectedServer = getSelectedServerConfig()
+  const selectedServer = getSelectedServerConfig();
   return selectedServer && selectedServer.id !== getDefaultServerConfig()?.id;
 };
 
 export const getDefaultServerConfig = () => {
   const APIURL = window.API_URL || process.env.API_URL;
   return find(SERVER_CONFIGS, { url: APIURL });
-}
+};
 
-export const getLocalFHIRServerConfig = () => find(SERVER_CONFIGS, { type: 'fhir', local: true });
-export const getDefaultFHIRServerConfig = () => find(SERVER_CONFIGS, { id: DEFAULT_FHIR_SERVER_FOR_LOCAL_ID });
+export const getLocalFHIRServerConfig = () =>
+  find(SERVER_CONFIGS, { type: "fhir", local: true });
+export const getDefaultFHIRServerConfig = () =>
+  find(SERVER_CONFIGS, { id: DEFAULT_FHIR_SERVER_FOR_LOCAL_ID });
 
 export const getFHIRServerConfigFromCurrentContext = () => {
   const server = getAppliedServerConfig();
-  if (server.type === 'fhir')
-    return server;
+  if (server.type === "fhir") return server;
   if (server.fhirServerId)
-    return find(SERVER_CONFIGS, { type: 'fhir', id: server.fhirServerId });
+    return find(SERVER_CONFIGS, { type: "fhir", id: server.fhirServerId });
   if (server.local)
     return getLocalFHIRServerConfig() || getDefaultFHIRServerConfig();
-}
+};
 
 export const canSwitchServer = () => {
   const user = getCurrentUser();
 
   return Boolean(
     getSelectedServerConfig() ||
-    get(user, 'is_superuser') ||
-    !isEmpty(get(user, 'auth_groups'))
+      get(user, "is_superuser") ||
+      !isEmpty(get(user, "auth_groups"))
   );
-}
+};
 
-export const isFHIRServer = () => get(getAppliedServerConfig(), 'type') === 'fhir';
+export const isFHIRServer = () =>
+  get(getAppliedServerConfig(), "type") === "fhir";
 
-export const isConcept = uri => Boolean(uri.match('/concepts/'));
-export const isMapping = uri => Boolean(uri.match('/mappings/'));
-
+export const isConcept = (uri) => Boolean(uri.match("/concepts/"));
+export const isMapping = (uri) => Boolean(uri.match("/mappings/"));
 
 // https://stackoverflow.com/questions/10420352/converting-file-size-in-bytes-to-human-readable-string
 /**
@@ -495,27 +613,28 @@ export const humanFileSize = (bytes, si = false, dp = 1) => {
   const thresh = si ? 1000 : 1024;
 
   if (Math.abs(bytes) < thresh) {
-    return bytes + ' B';
+    return bytes + " B";
   }
 
   const units = si
-    ? ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    ? ["KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    : ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
   let u = -1;
   const r = 10 ** dp;
 
   do {
     bytes /= thresh;
     ++u;
-  } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+  } while (
+    Math.round(Math.abs(bytes) * r) / r >= thresh &&
+    u < units.length - 1
+  );
 
-
-  return bytes.toFixed(dp) + ' ' + units[u];
-}
+  return bytes.toFixed(dp) + " " + units[u];
+};
 
 export const getServerConfigsForCurrentUser = () => {
-  if (isAdminUser())
-    return SERVER_CONFIGS;
+  if (isAdminUser()) return SERVER_CONFIGS;
 
   const defaultConfig = getDefaultServerConfig();
   const appliedConfig = getAppliedServerConfig();
@@ -524,340 +643,348 @@ export const getServerConfigsForCurrentUser = () => {
   if (isLoggedIn()) {
     const { auth_groups } = getCurrentUser();
     if (includes(auth_groups, OCL_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'ocl' })];
+      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: "ocl" })];
     if (includes(auth_groups, OCL_FHIR_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'fhir', hapi: false })];
+      eligible = [
+        ...eligible,
+        ...filter(SERVER_CONFIGS, { type: "fhir", hapi: false }),
+      ];
     if (includes(auth_groups, HAPI_FHIR_SERVERS_GROUP))
-      eligible = [...eligible, ...filter(SERVER_CONFIGS, { type: 'fhir', hapi: true })];
+      eligible = [
+        ...eligible,
+        ...filter(SERVER_CONFIGS, { type: "fhir", hapi: true }),
+      ];
   } else {
-    eligible = JSON.parse(localStorage.getItem('server_configs')) || [];
+    eligible = JSON.parse(localStorage.getItem("server_configs")) || [];
   }
 
   eligible = compact([defaultConfig, appliedConfig, ...eligible]);
-  return uniqBy(eligible, 'id');
-}
+  return uniqBy(eligible, "id");
+};
 
-export const arrayToSentence = (arr, separator, lastSeparator = ' and ') => {
-  if (arr.length <= 2)
-    return arr.join(lastSeparator);
+export const arrayToSentence = (arr, separator, lastSeparator = " and ") => {
+  if (arr.length <= 2) return arr.join(lastSeparator);
 
   const newArr = cloneDeep(arr);
   newArr.push(`${lastSeparator}${newArr.pop()}`);
   return newArr.join(separator);
-}
+};
 
-export const generateRandomString = () => Math.random().toString(36).substring(7);
+export const generateRandomString = () =>
+  Math.random()
+    .toString(36)
+    .substring(7);
 
-export const getEnv = forURL => {
+export const getEnv = (forURL) => {
   const fqdn = window.location.origin;
 
-  if (fqdn.match('app.staging.openconceptlab'))
-    return 'staging';
-  if (fqdn.match('app.qa.openconceptlab'))
-    return 'qa';
-  if (fqdn.match('app.demo.openconceptlab'))
-    return 'demo';
-  if (fqdn.match('app.dev.openconceptlab'))
-    return 'dev';
-  if (fqdn.match('app.staging.who.openconceptlab'))
-    return forURL ? 'staging.who' : 'staging-who';
-  if (fqdn.match('app.openconceptlab') || fqdn.match("nhdd.health"))
-    return forURL ? '' : 'production';
+  if (fqdn.match("app.staging.openconceptlab")) return "staging";
+  if (fqdn.match("app.qa.openconceptlab")) return "qa";
+  if (fqdn.match("app.demo.openconceptlab")) return "demo";
+  if (fqdn.match("app.dev.openconceptlab")) return "dev";
+  if (fqdn.match("app.staging.who.openconceptlab"))
+    return forURL ? "staging.who" : "staging-who";
+  if (fqdn.match("app.openconceptlab") || fqdn.match("nhdd.health"))
+    return forURL ? "" : "production";
 
-  return 'development';
-}
+  return "development";
+};
 
 export const getOpenMRSURL = () => {
   let env = getEnv(true);
 
-  if (env === 'development')
-    env = 'qa';
+  if (env === "development") env = "qa";
 
-  if (env) env += '.';
+  if (env) env += ".";
 
-  return OPENMRS_URL.replace('openmrs.', `openmrs.${env}`);
-}
+  return OPENMRS_URL.replace("openmrs.", `openmrs.${env}`);
+};
 
 export const recordGAPageView = () => {
   /*eslint no-undef: 0*/
   ReactGA.initialize(window.GA_ACCOUNT_ID || process.env.GA_ACCOUNT_ID);
   ReactGA.pageview(window.location.pathname + window.location.hash);
-}
+};
 
 export const recordGAAction = (category, action, label) => {
   /*eslint no-undef: 0*/
-  if(category && action) {
+  if (category && action) {
     ReactGA.initialize(window.GA_ACCOUNT_ID || process.env.GA_ACCOUNT_ID);
-    ReactGA.event({category: category, action: action, label: label || action});
+    ReactGA.event({
+      category: category,
+      action: action,
+      label: label || action,
+    });
   }
-}
+};
 
 export const recordGAUpsertEvent = (category, edit, resource) => {
-  const actionPrefix = edit ? 'update' : 'create'
-  resource = resource || category.replaceAll(' ', '_').toLowerCase()
-  let action = `${actionPrefix}_${resource}`
-  let label = `${startCase(actionPrefix)} ${startCase(resource)}`
-  recordGAAction(category, action, label)
-}
+  const actionPrefix = edit ? "update" : "create";
+  resource = resource || category.replaceAll(" ", "_").toLowerCase();
+  let action = `${actionPrefix}_${resource}`;
+  let label = `${startCase(actionPrefix)} ${startCase(resource)}`;
+  recordGAAction(category, action, label);
+};
 
-export const setUpRecentHistory = history => {
-  history.listen(location => {
-    recordGAPageView()
-    let visits = JSON.parse(get(localStorage, 'visits', '[]'));
-    let urlParts = compact(location.pathname.split('/'));
-    let type = '';
-    let category = '';
+export const setUpRecentHistory = (history) => {
+  history.listen((location) => {
+    recordGAPageView();
+    let visits = JSON.parse(get(localStorage, "visits", "[]"));
+    let urlParts = compact(location.pathname.split("/"));
+    let type = "";
+    let category = "";
     let format = false;
-    if (location.pathname.match('/login') || location.pathname === '/')
-      return;
-    if (location.pathname.match('/imports')) {
-      type = category = 'import';
+    if (location.pathname.match("/login") || location.pathname === "/") return;
+    if (location.pathname.match("/imports")) {
+      type = category = "import";
       format = true;
-    } else if (location.pathname.match('/search/')) {
-      category = 'search';
+    } else if (location.pathname.match("/search/")) {
+      category = "search";
       const queryParams = new URLSearchParams(location.search);
-      type = queryParams.get('type');
+      type = queryParams.get("type");
       format = true;
-    } else if (location.pathname.match('/compare')) {
-      category = 'compare';
-      type = 'concepts';
+    } else if (location.pathname.match("/compare")) {
+      category = "compare";
+      type = "concepts";
       format = true;
     } else {
       if (urlParts.length <= 3) {
         type = category = urlParts[0];
-        urlParts = without(urlParts, 'orgs', 'users');
+        urlParts = without(urlParts, "orgs", "users");
       }
       if (urlParts.length == 4) {
         type = category = urlParts[2];
-        urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
+        urlParts = without(urlParts, "orgs", "users", "sources", "collections");
       }
       if (urlParts.length == 5) {
-        if (includes(['mappings', 'concepts', 'versions', 'references'], last(urlParts))) {
+        if (
+          includes(
+            ["mappings", "concepts", "versions", "references"],
+            last(urlParts)
+          )
+        ) {
           type = category = last(urlParts);
         }
-        urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
+        urlParts = without(urlParts, "orgs", "users", "sources", "collections");
       }
       if (urlParts.length >= 6) {
-        if (location.pathname.match('/concepts/')) {
-          type = category = 'concept';
+        if (location.pathname.match("/concepts/")) {
+          type = category = "concept";
         }
-        if (location.pathname.match('/mappings/')) {
-          type = category = 'mapping';
+        if (location.pathname.match("/mappings/")) {
+          type = category = "mapping";
         }
-        if (location.pathname.match('/references')) {
-          type = category = 'reference';
+        if (location.pathname.match("/references")) {
+          type = category = "reference";
         }
-        if (location.pathname.match('/expansions')) {
-          type = category = 'expansion';
+        if (location.pathname.match("/expansions")) {
+          type = category = "expansion";
         }
-        urlParts = without(urlParts, 'orgs', 'users', 'sources', 'collections');
+        urlParts = without(urlParts, "orgs", "users", "sources", "collections");
       }
     }
-    if (!includes(['concepts', 'mappings'], last(urlParts)))
-      urlParts = without(urlParts, 'concepts', 'mappings');
-    let name = format ? map(urlParts, capitalize).join(' / ') : urlParts.join(' / ');
-    if (category !== type && type)
-      name += ' / ' + type;
+    if (!includes(["concepts", "mappings"], last(urlParts)))
+      urlParts = without(urlParts, "concepts", "mappings");
+    let name = format
+      ? map(urlParts, capitalize).join(" / ")
+      : urlParts.join(" / ");
+    if (category !== type && type) name += " / " + type;
     const lastVisit = visits[0];
-    if (isEqual(get(lastVisit, 'name'), name))
-      visits.shift();
-    visits.push({ name: name, location: location, type: type || '', category: category || '', at: new Date().getTime() });
-    visits = orderBy(visits, 'at', 'desc').slice(0, 10);
-    localStorage.setItem('visits', JSON.stringify(visits));
+    if (isEqual(get(lastVisit, "name"), name)) visits.shift();
+    visits.push({
+      name: name,
+      location: location,
+      type: type || "",
+      category: category || "",
+      at: new Date().getTime(),
+    });
+    visits = orderBy(visits, "at", "desc").slice(0, 10);
+    localStorage.setItem("visits", JSON.stringify(visits));
   });
-}
+};
 
-export const getSiteTitle = () => get(getAppliedServerConfig(), 'info.site.title', 'Kenya National Health Data Dictionary (NHDD)');
+export const getSiteTitle = () =>
+  get(
+    getAppliedServerConfig(),
+    "info.site.title",
+    "Kenya National Health Data Dictionary (NHDD)"
+  );
 
-export const getRandomColor = () => `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+export const getRandomColor = () =>
+  `#${Math.floor(Math.random() * 16777215).toString(16)}`;
 
 export const logoutUser = (alert = true, redirectToLogin, forced) => {
   const clearTokens = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('id_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('visits');
-  }
+    localStorage.removeItem("token");
+    localStorage.removeItem("id_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("visits");
+  };
   const callback = () => {
-    clearTokens()
-    if(alert)
-      alertifyjs.success('You have signed out.');
+    clearTokens();
+    if (alert) alertifyjs.success("You have signed out.");
 
-    if(redirectToLogin)
-      window.location.hash = '#/accounts/login';
+    if (redirectToLogin) window.location.hash = "#/accounts/login";
     else {
-      window.location.hash = '#/';
+      window.location.hash = "#/";
       window.location.reload();
     }
-  }
+  };
   let redirectURL;
-  if(forced) {
-    redirectURL = window.location.origin + '/#/accounts/login?next=' + (window.location.origin + '/'+ window.location.hash)
+  if (forced) {
+    redirectURL =
+      window.location.origin +
+      "/#/accounts/login?next=" +
+      (window.location.origin + "/" + window.location.hash);
   }
-  const logoutURL = getSSOLogoutURL(redirectURL)
-  if(logoutURL) {
-    clearTokens()
-    window.location = logoutURL
-  }
-  else
-    callback()
-}
+  const logoutURL = getSSOLogoutURL(redirectURL);
+  if (logoutURL) {
+    clearTokens();
+    window.location = logoutURL;
+  } else callback();
+};
 
 export const paramsToParentURI = (params, versioned = false) => {
-  let uri = '';
-  if (params.org)
-    uri += `/orgs/${params.org}`;
-  else if (params.user)
-    uri += `/users/${params.user}`;
-  if (params.source)
-    uri += `/sources/${params.source}`;
-  else if (params.collection)
-    uri += `/collections/${params.collection}`;
-  if (params.version && !versioned)
+  let uri = "";
+  if (params.org) uri += `/orgs/${params.org}`;
+  else if (params.user) uri += `/users/${params.user}`;
+  if (params.source) uri += `/sources/${params.source}`;
+  else if (params.collection) uri += `/collections/${params.collection}`;
+  if (params.version && !versioned && params.version !== "summary")
     uri += `/${params.version}`;
 
-  return uri + '/';
-}
+  return uri + "/";
+};
 
 export const paramsToURI = (params, versioned = false, expansion = false) => {
-  let uri = '';
-  if (params.org)
-    uri += `/orgs/${params.org}`;
-  else if (params.user)
-    uri += `/users/${params.user}`;
-  if (params.source)
-    uri += `/sources/${params.source}`;
-  else if (params.collection)
-    uri += `/collections/${params.collection}`;
-  if (params.version && !versioned)
-    uri += `/${params.version}`;
-  if (params.expansion && !expansion)
-    uri += `/expansions/${params.expansion}`;
-  if (params.concept)
-    uri += `/concepts/${params.concept}`;
-  else if (params.mapping)
-    uri += `/mappings/${params.mapping}`;
-  if (params.conceptVersion && !versioned)
-    uri += `/${params.conceptVersion}`;
-  if (params.mappingVersion && !versioned)
-    uri += `/${params.mappingVersion}`;
+  let uri = "";
+  if (params.org) uri += `/orgs/${params.org}`;
+  else if (params.user) uri += `/users/${params.user}`;
+  if (params.source) uri += `/sources/${params.source}`;
+  else if (params.collection) uri += `/collections/${params.collection}`;
+  if (params.version && !versioned) uri += `/${params.version}`;
+  if (params.expansion && !expansion) uri += `/expansions/${params.expansion}`;
+  if (params.concept) uri += `/concepts/${params.concept}`;
+  else if (params.mapping) uri += `/mappings/${params.mapping}`;
+  if (params.conceptVersion && !versioned) uri += `/${params.conceptVersion}`;
+  if (params.mappingVersion && !versioned) uri += `/${params.mappingVersion}`;
 
-  return uri + '/';
-}
+  return uri + "/";
+};
 
 export const getWidthOfText = (txt, fontname, fontsize) => {
   if (getWidthOfText.c === undefined) {
-    getWidthOfText.c = document.createElement('canvas');
-    getWidthOfText.ctx = getWidthOfText.c.getContext('2d');
+    getWidthOfText.c = document.createElement("canvas");
+    getWidthOfText.ctx = getWidthOfText.c.getContext("2d");
   }
-  var fontspec = fontsize + ' ' + fontname;
-  if (getWidthOfText.ctx.font !== fontspec)
-    getWidthOfText.ctx.font = fontspec;
+  var fontspec = fontsize + " " + fontname;
+  if (getWidthOfText.ctx.font !== fontspec) getWidthOfText.ctx.font = fontspec;
   return getWidthOfText.ctx.measureText(txt).width + 60;
-}
+};
 
-export const getParamsFromObject = item => {
+export const getParamsFromObject = (item) => {
   let params = {};
-  if (item.owner_type === 'Organization')
-    params.org = item.owner;
-  else if (item.owner_type === 'User')
-    params.user = item.owner;
-  if (item.source)
-    params.source = item.source;
-  if (item.map_type)
-    params.mapping = item.id;
-  else if (item.concept_class)
-    params.concept = item.id;
+  if (item.owner_type === "Organization") params.org = item.owner;
+  else if (item.owner_type === "User") params.user = item.owner;
+  if (item.source) params.source = item.source;
+  if (item.map_type) params.mapping = item.id;
+  else if (item.concept_class) params.concept = item.id;
 
   return params;
-}
+};
 
-export const dropVersion = uri => {
-  if (!uri)
-    return uri
+export const dropVersion = (uri) => {
+  if (!uri) return uri;
 
-  const parts = uri.split('/')
+  const parts = uri.split("/");
 
-  if (parts.length <= 4)
-    return uri
+  if (parts.length <= 4) return uri;
 
-  const resource = nth(parts, -4)
-  const name = nth(parts, -3)
-  const version = nth(parts, -2)
-  if (['concepts', 'mappings', 'sources', 'collections'].includes(resource) && name && version)
-    return parts.splice(0, parts.indexOf(nth(parts, -2))).join('/') + '/'
+  const resource = nth(parts, -4);
+  const name = nth(parts, -3);
+  const version = nth(parts, -2);
+  if (
+    ["concepts", "mappings", "sources", "collections"].includes(resource) &&
+    name &&
+    version
+  )
+    return parts.splice(0, parts.indexOf(nth(parts, -2))).join("/") + "/";
 
-  return uri
-
-}
+  return uri;
+};
 
 // Internet Explorer 6-11
-export const isIE = () => /*@cc_on!@*/false || !!document.documentMode;
+export const isIE = () => /*@cc_on!@*/ false || !!document.documentMode;
 
 // Chrome 1 - 71
-export const isChrome = () => !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+export const isChrome = () =>
+  !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
 
 // Opera 8.0+
-export const isOpera = () => (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+export const isOpera = () =>
+  (!!window.opr && !!opr.addons) ||
+  !!window.opera ||
+  navigator.userAgent.indexOf(" OPR/") >= 0;
 
 export const isDeprecatedBrowser = () => isIE() || isOpera();
 
 export const isSSOEnabled = () => {
-  const redirectURL = window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
-  const oidClientID = window.OIDC_RP_CLIENT_ID || process.env.OIDC_RP_CLIENT_ID
-  const oidClientSecret = window.OIDC_RP_CLIENT_SECRET || process.env.OIDC_RP_CLIENT_SECRET
+  const redirectURL =
+    window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL;
+  const oidClientID = window.OIDC_RP_CLIENT_ID || process.env.OIDC_RP_CLIENT_ID;
+  const oidClientSecret =
+    window.OIDC_RP_CLIENT_SECRET || process.env.OIDC_RP_CLIENT_SECRET;
 
-  return Boolean(redirectURL && oidClientID && oidClientSecret)
-}
+  return Boolean(redirectURL && oidClientID && oidClientSecret);
+};
 
-export const getLoginURL = returnTo => {
-  let redirectURL = returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
-  const oidClientID = window.OIDC_RP_CLIENT_ID || process.env.OIDC_RP_CLIENT_ID
+export const getLoginURL = (returnTo) => {
+  let redirectURL =
+    returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL;
+  const oidClientID = window.OIDC_RP_CLIENT_ID || process.env.OIDC_RP_CLIENT_ID;
 
   redirectURL = redirectURL.replace(/([^:]\/)\/+/g, "$1");
 
-  if(isSSOEnabled())
-    return `${getAPIURL()}/users/login/?client_id=${oidClientID}&state=fj8o3n7bdy1op5&nonce=13sfaed52le09&redirect_uri=${redirectURL}`
-  let url = '/#/accounts/login'
-  if(returnTo)
-    url += `?returnTo=${returnTo}`
+  if (isSSOEnabled())
+    return `${getAPIURL()}/users/login/?client_id=${oidClientID}&state=fj8o3n7bdy1op5&nonce=13sfaed52le09&redirect_uri=${redirectURL}`;
+  let url = "/#/accounts/login";
+  if (returnTo) url += `?returnTo=${returnTo}`;
 
-  return url
-}
+  return url;
+};
 
-export const getSSOLogoutURL = returnTo => {
-  const redirectURL = returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL
-  const idToken = localStorage.id_token
-  if(redirectURL && idToken)
-    return `${getAPIURL()}/users/logout/?id_token_hint=${idToken}&post_logout_redirect_uri=${redirectURL}`
-}
+export const getSSOLogoutURL = (returnTo) => {
+  const redirectURL =
+    returnTo || window.LOGIN_REDIRECT_URL || process.env.LOGIN_REDIRECT_URL;
+  const idToken = localStorage.id_token;
+  if (redirectURL && idToken)
+    return `${getAPIURL()}/users/logout/?id_token_hint=${idToken}&post_logout_redirect_uri=${redirectURL}`;
+};
 
-
-export const urlSearchParamsToObject = urlSearchParams => {
-  const result = {}
-  for(const [key, value] of urlSearchParams.entries()) { // each 'entry' is a [key, value] tuple
+export const urlSearchParamsToObject = (urlSearchParams) => {
+  const result = {};
+  for (const [key, value] of urlSearchParams.entries()) {
+    // each 'entry' is a [key, value] tuple
     result[key] = value;
   }
   return result;
-}
+};
 
-export const toNumDisplay = number => number ? number.toLocaleString() : number
+export const toNumDisplay = (number) =>
+  number ? number.toLocaleString() : number;
 
+export const getSiblings = (elem) => {
+  // Setup siblings array and get the first sibling
+  var siblings = [];
+  var sibling = elem.parentNode.firstChild;
 
-export const getSiblings = elem => {
+  // Loop through each sibling and push to the array
+  while (sibling) {
+    if (sibling.nodeType === 1 && sibling !== elem) {
+      siblings.push(sibling);
+    }
+    sibling = sibling.nextSibling;
+  }
 
-	// Setup siblings array and get the first sibling
-	var siblings = [];
-	var sibling = elem.parentNode.firstChild;
-
-	// Loop through each sibling and push to the array
-	while (sibling) {
-		if (sibling.nodeType === 1 && sibling !== elem) {
-			siblings.push(sibling);
-		}
-		sibling = sibling.nextSibling
-	}
-
-	return siblings;
-
+  return siblings;
 };
