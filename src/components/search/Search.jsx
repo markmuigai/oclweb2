@@ -213,9 +213,6 @@ class Search extends React.Component {
       this.setQueryParamsInState()
     if(!isEqual(prevProps.extraControlFilters, this.props.extraControlFilters) && !isURLUpdatedByActionChange)
       this.setQueryParamsInState()
-    if(!isEqual(prevProps.baseURL, this.props.baseURL)) {
-      this.setQueryParamsInState()
-    }
   }
 
   updateSummaryOnResult(resource, summary) {
@@ -312,6 +309,7 @@ class Search extends React.Component {
         if(has(this.state, `results.${resource}.facets`)) {
           const newState = {...this.state}
           newState.results[resource].facets = this.state.facets
+          newState.results[resource].facets.loaded = true
           this.setState(newState)
         }
       })
@@ -450,7 +448,7 @@ class Search extends React.Component {
             window.location.hash = this.getCurrentLayoutURL()
           this.onSearchResultsLoad(resource, response, resetItems)
           setTimeout(() => this.setState({isURLUpdatedByActionChange: false}), 1000)
-          if(!noHeaders && facets && !fhir && resource !== 'references')
+          if(!noHeaders && facets && !fhir && resource !== 'references' && !this.props.noFilters)
             fetchFacets(_resource, {...queryParams}, baseURL, this.onFacetsLoad)
           if(counts && !this.props.nested)
             fetchCounts(_resource, {...queryParams}, this.onCountsLoad)
@@ -975,6 +973,7 @@ class Search extends React.Component {
           open={openFacetsDrawer}
           onClose={this.toggleFacetsDrawer}
           filters={get(results[resource], 'facets.fields', {})}
+          loaded={get(results[resource], 'facets.loaded', false)}
           facetOrder={get(FACET_ORDER, resource)}
           onApply={this.onApplyFacets}
           kwargs={get(this.props, 'match.params')}
