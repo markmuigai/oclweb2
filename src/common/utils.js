@@ -34,6 +34,7 @@ import {
   last,
   nth,
   startCase,
+  isNumber,
 } from "lodash";
 import {
   DATE_FORMAT,
@@ -166,10 +167,11 @@ export const copyURL = (url) => {
   copyToClipboard(url, "Copied URL to clipboard!");
 };
 
-export const copyToClipboard = (copyText, message) => {
+export const copyToClipboard = (copyText, message, timeout) => {
   if (copyText) navigator.clipboard.writeText(copyText);
 
-  if (message) alertifyjs.success(message);
+  if (message)
+    alertifyjs.success(message, isNumber(timeout) ? timeout : undefined);
 };
 
 export const toParentURI = (uri) =>
