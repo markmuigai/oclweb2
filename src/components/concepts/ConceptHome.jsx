@@ -302,6 +302,8 @@ class ConceptHome extends React.Component {
     const refetchMappedSources = !find(this.state.mappedSources, {url: targetSourceURL})
     APIService.new().overrideURL(URL).post(payload).then(response => {
       if(response.status === 201) {
+        if(this.props.onCreateNewMapping)
+          this.props.onCreateNewMapping(response.data?.map_type)
         if(refetchMappedSources)
           this.fetchParentMappedSources()
         alertifyjs.success('Success')
@@ -456,6 +458,7 @@ class ConceptHome extends React.Component {
                 onAssignSortWeight={canSort ? this.onAssignSortWeight : false}
                 onRemoveMapping={canAct ? this.onRemoveMapping : false}
                 onReactivateMapping={canAct ? this.onReactivateMapping : false}
+                sourceVersionSummary={this.props.sourceVersionSummary}
               />
             </div>
           </React.Fragment>

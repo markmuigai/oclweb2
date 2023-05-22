@@ -188,8 +188,11 @@ export const toOwnerURI = (uri) =>
 
 export const headFirst = (versions) =>
   compact([
-    find(versions, { version: "HEAD" }),
-    ...reject(versions, { version: "HEAD" }),
+    find(versions, (version) => (version.version || version.id) === "HEAD"),
+    ...reject(
+      versions,
+      (version) => (version.version || version.id) === "HEAD"
+    ),
   ]);
 
 export const currentUserToken = () => localStorage.token;
