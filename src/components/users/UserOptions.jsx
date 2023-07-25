@@ -50,7 +50,7 @@ const UserOptions = () => {
 
   React.useEffect(() => {
     if(isLoggedIn() && isSSOEnabled())
-      intervalId = setInterval(checkIfStillAuthenticated, 2000)
+      intervalId = setInterval(checkIfStillAuthenticated, 10000)
   }, [])
 
   return (

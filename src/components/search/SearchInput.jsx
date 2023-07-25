@@ -2,12 +2,12 @@ import 'core-js/features/url-search-params';
 import React from 'react';
 import {
   Search as SearchIcon,
-  CenterFocusStrong as ExactMatchIcon,
   Clear as ClearIcon,
 } from '@mui/icons-material';
-import { InputBase, Divider, IconButton, Tooltip } from '@mui/material';
+import { InputBase, IconButton, Tooltip } from '@mui/material';
 import { get } from 'lodash';
 import { isAtGlobalSearch, getSiteTitle } from '../../common/utils';
+import { withTranslation } from 'react-i18next';
 
 class SearchInput extends React.Component {
   constructor(props){
@@ -18,7 +18,6 @@ class SearchInput extends React.Component {
     this.state = {
       siteTitle: getSiteTitle(),
       input: undefined,
-      exactMatch: 'off',
       queryParams: {},
     }
   }
@@ -46,26 +45,19 @@ class SearchInput extends React.Component {
   componentDidMount() {
     document.body.addEventListener("keydown", this._listenKey);
     this.setState({
-      input: this.getValueFromURL('q'), exactMatch: this.getValueFromURL('exactMatch')
+      input: this.getValueFromURL('q')
     })
   }
 
   componentDidUpdate(prevProps) {
     const currentSearchStrFromURL = this.getValueFromURL('q')
-    const currentExactMatchFromURL = this.getValueFromURL('exactMatch')
     const prevSearchStrFromURL = this.getValueFromURL('q', '', prevProps)
-    const prevExactMatchFromURL = this.getValueFromURL('exactMatch', '', prevProps)
 
     if(
       (currentSearchStrFromURL !== prevSearchStrFromURL) ||
       (currentSearchStrFromURL && this.state.input === undefined)
     )
       this.setState({input: currentSearchStrFromURL})
-    if(
-      (currentExactMatchFromURL !== prevExactMatchFromURL) ||
-      (currentExactMatchFromURL && !this.state.exactMatch)
-    )
-      this.setState({exactMatch: currentExactMatchFromURL})
   }
 
   handleKeyPress = event => {
@@ -82,9 +74,9 @@ class SearchInput extends React.Component {
       event.preventDefault()
       event.stopPropagation()
     }
-    const { input, exactMatch } = this.state
+    const { input } = this.state
     if(this.props.onSearch)
-      this.props.onSearch(input, exactMatch)
+      this.props.onSearch(input)
     else
       this.moveToSearchPage()
   }
@@ -102,36 +94,42 @@ class SearchInput extends React.Component {
 
   moveToSearchPage = () => {
     if(!this.props.nested) {
-      const { input, exactMatch } = this.state
+      const { input } = this.state
       let _input = input || '';
-      const exactMatchStr = exactMatch === 'on' ? '&exactMatch=on' : '';
       const queryParams = new URLSearchParams(window.location.hash.split('?')[1])
       const resourceType = queryParams.get('type')
-      if(!_input)
-        setTimeout(() => window.location.hash = '/search/', 500)
+      let URL = '/search/'
+      if(!_input) {
+        setTimeout(() => {
+          URL = '/search/'
+          if(resourceType)
+            URL += `?type=${resourceType}`
+          window.location.hash = URL
+        }, 500)
+      }
       else {
-        let URL =`/search/?q=${_input}${exactMatchStr}`;
-        if(resourceType)
-          URL += `&type=${resourceType}`
+        if(this.props.location.pathname === '/search/') {
+          queryParams.set('q', _input)
+          URL += `?${queryParams.toString()}`
+        } else {
+          URL +=`?q=${_input}`;
+          if(resourceType)
+            URL += `&type=${resourceType}`
+        }
         window.location.hash = URL
       }
     }
   }
 
-  handleExactMatchChange = () => {
-    const isOn = this.state.exactMatch === 'on'
-    this.setState({exactMatch: isOn ? 'off' : 'on'}, this.performSearch)
-  }
-
   render() {
-    const { input, exactMatch, siteTitle } = this.state
-    const { searchInputPlaceholder, nested, noExactMatch } = this.props
+    const { input, siteTitle } = this.state
+    const { searchInputPlaceholder, nested, t } = this.props
     const marginBottom = (isAtGlobalSearch() || nested) ? '5px' : '0px';
     return (
       <div className='col-xs-12 no-side-padding' style={{marginBottom: marginBottom, display: 'flex', alignItems: 'center', border: '1px solid darkgray', borderRadius: '4px'}}>
         <InputBase
           style={{flex: 1, marginLeft: '10px'}}
-          placeholder={searchInputPlaceholder || `Search ${siteTitle}`}
+          placeholder={searchInputPlaceholder || `${t('search.label')} ${siteTitle}`}
           inputProps={{ 'aria-label': 'search ocl' }}
           value={input || ''}
           fullWidth
@@ -141,7 +139,7 @@ class SearchInput extends React.Component {
         />
         {
           input &&
-          <Tooltip arrow title='Clear'>
+            <Tooltip arrow title={t('common.clear')}>
             <IconButton
               type="submit"
               style={{padding: '10px'}}
@@ -152,7 +150,7 @@ class SearchInput extends React.Component {
             </IconButton>
           </Tooltip>
         }
-        <Tooltip arrow title='Search'>
+        <Tooltip arrow title={t('search.label')}>
           <IconButton
             type="submit"
             style={{padding: '10px'}}
@@ -162,25 +160,9 @@ class SearchInput extends React.Component {
             <SearchIcon />
           </IconButton>
         </Tooltip>
-        {
-          !noExactMatch &&
-          <React.Fragment>
-            <Divider style={{height: '28px', margin: '4px'}} orientation="vertical" />
-            <Tooltip arrow title='Exact Match'>
-              <IconButton
-                color={exactMatch === 'on' ? "primary" : "default"}
-                style={{padding: '10px'}}
-                aria-label="exact"
-                onClick={this.handleExactMatchChange}
-                size="large">
-                <ExactMatchIcon />
-              </IconButton>
-            </Tooltip>
-          </React.Fragment>
-        }
       </div>
     );
   }
 }
 
-export default SearchInput;
+export default withTranslation('translations')(SearchInput);

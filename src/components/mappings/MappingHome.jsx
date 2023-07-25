@@ -2,9 +2,8 @@ import React from 'react';
 import { CircularProgress } from '@mui/material';
 import { get, isObject, has } from 'lodash';
 import APIService from '../../services/APIService';
-import { recordGAAction } from '../../common/utils'
+import { recordGAAction, highlightTexts } from '../../common/utils'
 import ScopeHeader from './ScopeHeader'
-import MappingHomeHeader from './MappingHomeHeader';
 import MappingHomeDetails from './MappingHomeDetails';
 import NotFound from '../common/NotFound';
 import AccessDenied from '../common/AccessDenied';
@@ -33,6 +32,8 @@ class MappingHome extends React.Component {
     if(prevProps.location.pathname !== this.props.location.pathname) {
       this.refreshDataByURL()
     }
+
+    this.highlightFromSearch()
   }
 
   getMappingURLFromPath() {
@@ -84,6 +85,8 @@ class MappingHome extends React.Component {
     })
   }
 
+  highlightFromSearch = () => this.props.searchMeta && setTimeout(() => highlightTexts([{...this.state.mapping, search_meta: this.props.searchMeta}]), 100)
+
   getVersions() {
     APIService.new()
               .overrideURL(this.getVersionedObjectURLFromPath() + 'versions/')
@@ -133,17 +136,13 @@ class MappingHome extends React.Component {
         {
           !isLoading && !hasError &&
             <div id='resource-item-container' className='col-xs-12 home-container no-side-padding'>
-            {
-              this.props.scoped ?
               <ScopeHeader
                 {...headerParams}
                 onClose={this.props.onClose}
                 global={this.props.global}
                 scoped={this.props.scoped}
                 showActions={this.props.showActions}
-              /> :
-              <MappingHomeHeader {...headerParams} />
-            }
+              />
             <div className='col-xs-12' style={{position: 'relative', marginTop: this.getContentMarginTop()}}>
               <MappingHomeDetails
                 scoped={this.props.scoped}

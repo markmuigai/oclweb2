@@ -1,7 +1,7 @@
 /*eslint no-process-env: 0*/
 import "core-js/features/url-search-params";
 import React from "react";
-import ReactGA from "react-ga";
+import ReactGA from "react-ga4";
 import alertifyjs from "alertifyjs";
 import moment from "moment";
 import {
@@ -35,6 +35,9 @@ import {
   nth,
   startCase,
   isNumber,
+  uniq,
+  flatten,
+  pickBy,
 } from "lodash";
 import {
   DATE_FORMAT,
@@ -720,7 +723,10 @@ export const getOpenMRSURL = () => {
 export const recordGAPageView = () => {
   /*eslint no-undef: 0*/
   ReactGA.initialize(window.GA_ACCOUNT_ID || process.env.GA_ACCOUNT_ID);
-  ReactGA.pageview(window.location.pathname + window.location.hash);
+  ReactGA.send({
+    hitType: "pageview",
+    page: window.location.pathname + window.location.hash,
+  });
 };
 
 export const recordGAAction = (category, action, label) => {
@@ -731,6 +737,7 @@ export const recordGAAction = (category, action, label) => {
       category: category,
       action: action,
       label: label || action,
+      transport: "xhr",
     });
   }
 };
@@ -1004,4 +1011,106 @@ export const getSiblings = (elem) => {
   }
 
   return siblings;
+};
+
+export const sortValuesBySourceSummary = (
+  data,
+  summary,
+  summaryField,
+  isLocale
+) => {
+  if (isEmpty(compact(data)) || !summary) return data;
+  let _data = compact(data).map((d) => {
+    d.resultType = "Ordered";
+    return d;
+  });
+  const summaryValues = get(summary, summaryField);
+  if (summaryValues) {
+    const usedValues = map(summaryValues, (value) => value[0]);
+    usedValues.forEach((used) => {
+      const _used = find(_data, (_d) => {
+        const id = _d?.id
+          ?.toLowerCase()
+          ?.replace("-", "")
+          ?.replace("_", "")
+          ?.replace(" ", "");
+        const _used = used
+          ?.toLowerCase()
+          ?.replace("-", "")
+          ?.replace("_", "")
+          ?.replace(" ", "");
+        return _used === id;
+      });
+      if (_used) _used.resultType = "Suggested";
+    });
+  }
+  let values = orderBy(_data, ["resultType", "name"], ["desc", "asc"]);
+
+  if (isLocale) {
+    values = uniqBy(
+      [
+        {
+          ...find(values, { id: summary.default_locale }),
+          resultType: "Suggested",
+        },
+        ...orderBy(
+          filter(values, (val) =>
+            (summary.supported_locales || []).includes(val.id)
+          ).map((val) => ({ ...val, resultType: "Suggested" })),
+          ["name"],
+          ["asc"]
+        ),
+        ...values,
+      ],
+      "id"
+    );
+  }
+
+  return values;
+};
+
+const extractTextBetweenEmTags = (str) => {
+  const regex = /<em>(.*?)<\/em>/g;
+  const matches = [];
+  let match;
+  while ((match = regex.exec(str)) !== null) {
+    matches.push(match[1]);
+  }
+  return matches;
+};
+
+const getHighlightedTexts = (items) => {
+  return uniq(
+    flatten(
+      map(
+        flatten(
+          flatten(
+            flatten(
+              map(items, (i) =>
+                values(
+                  pickBy(
+                    i?.search_meta?.search_highlight,
+                    (value, key) => !key.startsWith("_")
+                  )
+                )
+              )
+            )
+          )
+        ),
+        (val) => extractTextBetweenEmTags(val)
+      )
+    )
+  );
+};
+
+export const highlightTexts = (items, texts, unmark = false) => {
+  const markInstance = new Mark(document.querySelectorAll(".searchable"));
+  const _texts = texts || getHighlightedTexts(items);
+  const options = {
+    element: "span",
+    className: "highlight-search-results",
+    separateWordSearch: false,
+  };
+  if (unmark) markInstance.unmark(options);
+  markInstance.mark(_texts, options);
 };

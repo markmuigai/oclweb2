@@ -23,6 +23,7 @@ const ORDER_BY = ['_sort_weight', 'cascade_target_source_name', 'cascade_target_
 const order = (mappings, is_default) => orderBy(mappings, is_default ? DEFAULT_ORDER_BY : ORDER_BY)
 
 const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, isSelf, onCreateNewMapping, suggested, onRemoveMapping, onReactivateMapping, onSortEnd, onClearSortWeight, onAssignSortWeight }) => {
+  const searchable = !isIndirect
   const [oMappings, setMappings] = React.useState([])
   const [form, setForm] = React.useState(false)
   const [addNewMapType, setAddNewMapType] = React.useState('')
@@ -164,7 +165,7 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
     return badgeProps
   }
 
-  const tooltipTitle = allMappingsHaveSortWeight ? 'Custom sorting has been applied' : (mappingsWithSortWeightCount ? `Custom sorting has been applied to ${mappingsWithSortWeightCount} mappings.` : undefined)
+  const tooltipTitle = isIndirect ? undefined : (allMappingsHaveSortWeight ? 'Custom sorting has been applied' : (mappingsWithSortWeightCount ? `Custom sorting has been applied to ${mappingsWithSortWeightCount} mappings.` : undefined))
 
   const _onAssignSortWeight = mapping => {
     let maxSortWeight = maxBy(oMappings, 'sort_weight')?.sort_weight
@@ -262,10 +263,9 @@ const ConceptHomeMappingsTableRows = ({ concept, mappings, mapType, isIndirect, 
                                           fontSize='small'
                                           style={{width: '12pt'}}
                                         />
-
                                         </Tooltip>
                                     </span>
-                                    <span className={mapping.retired ? 'retired' : ''}>
+                                    <span className={mapping.retired ? (searchable ? 'retired searchable' : 'searchable') : searchable ? 'searchable' : ''}>
                                       { mapping[conceptCodeAttr] }
                                     </span>
                                   </span>

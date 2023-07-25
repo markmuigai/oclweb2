@@ -1,6 +1,7 @@
 import 'core-js/features/url-search-params';
 import React from 'react';
 import { withRouter } from "react-router";
+import { withTranslation } from 'react-i18next';
 import alertifyjs from 'alertifyjs';
 import {
   get, set, cloneDeep, merge, forEach, includes, keys, pickBy, size, isEmpty, has, find, isEqual,
@@ -9,7 +10,7 @@ import {
 import { Share as ShareIcon, AccountTreeOutlined as HierarchyIcon } from '@mui/icons-material'
 import { CircularProgress, Chip, Tooltip } from '@mui/material';
 import APIService from '../../services/APIService'
-import { formatDate, copyURL, toRelativeURL, getParamsFromObject } from '../../common/utils';
+import { formatDate, copyURL, toRelativeURL, getParamsFromObject, highlightTexts } from '../../common/utils';
 import {
   BLUE, GREEN, WHITE, DEFAULT_LIMIT, TABLE_LAYOUT_ID, LIST_LAYOUT_ID
 } from '../../common/constants';
@@ -59,7 +60,6 @@ class Search extends React.Component {
       page: 1,
       updatedSince: false,
       searchStr: '',
-      exactMatch: 'off',
       resource: 'concepts',
       isLoading: false,
       sortParams: DEFAULT_SORT_PARAMS,
@@ -190,7 +190,6 @@ class Search extends React.Component {
       resource: this.formatResourceType(queryParams.get('type') || this.props.resource || 'concepts'),
       isLoading: true,
       searchStr: queryParams.get('q') || '',
-      exactMatch: queryParams.get('exactMatch') || 'off',
       viewFilters: this.props.viewFilters || {},
       userFilters: userFilters,
       fhirParams: this.props.fhirParams || {},
@@ -296,12 +295,16 @@ class Search extends React.Component {
       }, () => {
         if(includes(['sources', 'collections'], resource))
           this.loadSummary(resource)
+        this.highlight()
       })
     } else if (get(response, 'detail'))
       this.setState({isLoading: false}, () => alertifyjs.error(response.detail, 0))
     else
       this.setState({isLoading: false}, () => {throw response})
   }
+
+
+  highlight = item => highlightTexts(item?.id ? [item] : this.state.results[this.state.resource].items, null, true)
 
   onFacetsLoad = (response, resource) => {
     if(response.status === 200) {
@@ -332,9 +335,7 @@ class Search extends React.Component {
     }
   }
 
-  onSearch = (value, exactMatch) => {
-    this.fetchNewResults({searchStr: value, page: 1, exactMatch: exactMatch}, true, true, true)
-  }
+  onSearch = value => this.fetchNewResults({searchStr: value, page: 1}, true, true, true)
 
   onFhirSearch = params => this.setState(
     {fhirParams: {...params, _sort: this.state.fhirParams._sort || '_id'}},
@@ -404,14 +405,14 @@ class Search extends React.Component {
 
     this.setState(newState, () => {
       const {
-        resource, searchStr, page, exactMatch, sortParams, updatedSince, limit,
+        resource, searchStr, page, sortParams, updatedSince, limit,
         fhirParams, staticParams
       } = this.state;
       const { configQueryParams, noQuery, noHeaders, fhir, hapi, paginationParams, onHierarchyToggle, hierarchy } = this.props;
       let queryParams = {};
       if(!noQuery) {
         queryParams = {
-          q: searchStr || '', page: page, exact_match: exactMatch, limit: limit,
+          q: searchStr || '', page: page, limit: limit, includeSearchMeta: true,
           verbose: includes(['sources', 'collections', 'organizations', 'users', 'references'], resource),
           ...this.getFacetQueryParam(),
         };
@@ -471,8 +472,6 @@ class Search extends React.Component {
       }
       if(!queryParams.get('q'))
         queryParams.delete('q')
-      if(queryParams.get('exact_match') === 'off')
-        queryParams.delete('exact_match')
 
       const _string = queryParams.toString()
       if(_string)
@@ -602,7 +601,6 @@ class Search extends React.Component {
     url += `&isTable=${this.state.isTable}`
     url += `&isList=${this.state.isList}`
     url += `&page=${this.state.page}`
-    url += `&exactMatch=${this.state.exactMatch || 'off'}`
     if(!this.props.nested)
       url += `&type=${this.state.resource || 'concepts'}`
     if(this.state.limit !== DEFAULT_LIMIT)
@@ -627,7 +625,7 @@ class Search extends React.Component {
   }
 
   getFilterControls() {
-    const { nested, extraControls, fhir, extraControlFilters, asReference } = this.props;
+    const { nested, extraControls, fhir, extraControlFilters, asReference, t } = this.props;
     const {
       appliedFacets, resource,
       viewFilters, userFilters
@@ -644,7 +642,7 @@ class Search extends React.Component {
                 count={size(appliedFacets)}
                 onClick={this.toggleFacetsDrawer}
                 disabled={isDisabledFilters}
-                label='Filters'
+                label={t('search.filters')}
                 size={nested ? 'small' : 'medium'}
                 isOpen={this.state.openFacetsDrawer}
               />
@@ -787,7 +785,7 @@ class Search extends React.Component {
       nested, pins, onPinCreate, onPinDelete, showPin, essentialColumns, onReferencesDelete,
       isVersionedObject, parentResource, newResourceComponent, noFilters, onSelectChange,
       onCreateSimilarClick, onCreateMappingClick, viewFields, noControls, fhir, hapi, onSelect,
-      asReference, onHierarchyToggle, hierarchy
+      asReference, onHierarchyToggle, hierarchy, t
     } = this.props;
     const {
       resource, results, isLoading, sortParams, openFacetsDrawer, isTable, isInfinite, appliedFacets,
@@ -853,7 +851,7 @@ class Search extends React.Component {
                             icon={<HierarchyIcon fontSize='small' />}
                             size='small'
                             onClick={this.onHierarchyViewChange}
-                            label='Hierarchy'
+                            label={t('common.hierarchy')}
                             color={hierarchy ? 'primary' : 'secondary'}
                             variant={hierarchy ? 'contained' : 'outlined'}
                           />
@@ -866,7 +864,7 @@ class Search extends React.Component {
                             <Chip
                               onClick={this.onShareClick}
                               icon={<ShareIcon fontSize='small' />}
-                              label='Share'
+                              label={t('common.share')}
                               color='secondary'
                               variant='outlined'
                               size={nested ? 'small' : 'medium'}
@@ -884,7 +882,7 @@ class Search extends React.Component {
               <div className='col-sm-12 no-side-padding'>
                 <div style={{width: '100%', display: 'inline-flex', marginTop: '4px', fontSize: '12px', fontWeight: 'bold'}}>
                   <span onClick={() => copyURL(toRelativeURL(this.searchURL))} style={{backgroundColor: GREEN, color: WHITE, padding: '4px', borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px', border: `1px solid ${GREEN}`, textAlign: 'center', cursor: 'pointer'}}>
-                    Copy Expression
+                    {t('search.copy_expression')}
                   </span>
                   <span onClick={() => copyURL(toRelativeURL(this.searchURL))} style={{color: GREEN, padding: '4px', borderTopRightRadius: '16px', borderBottomRightRadius: '16px', border: `1px solid ${GREEN}`, maxWidth: 'calc(100% - 105px)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', cursor: 'pointer'}}>
                     {toRelativeURL(this.searchURL)}
@@ -1001,6 +999,7 @@ class Search extends React.Component {
                     global
                     scoped
                     singleColumn
+                    searchMeta={selectedItem.search_meta}
                     showActions={isInsideConfiguredOrg}
                                 onClose={isInsideConfiguredOrg ? this.onCloseDetails : null}
                                 concept={selectedItem}
@@ -1012,6 +1011,7 @@ class Search extends React.Component {
                     scoped
                     singleColumn
                     noRedirect
+                    searchMeta={selectedItem.search_meta}
                     showActions={isInsideConfiguredOrg}
                                 onClose={isInsideConfiguredOrg ? this.onCloseDetails : null}
                                 mapping={selectedItem}
@@ -1028,4 +1028,4 @@ class Search extends React.Component {
   }
 }
 
-export default withRouter(Search);
+export default withRouter(withTranslation('translations')(Search));

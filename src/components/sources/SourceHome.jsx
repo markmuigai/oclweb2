@@ -353,6 +353,7 @@ class SourceHome extends React.Component {
                   versions={versions}
                   selectedResource={selected}
                   onSplitViewClose={() => this.setState({selected: null, width: false})}
+                  sourceVersionSummary={this.state.sourceVersionSummary}
                 />
               </div>
               <div id='source-container' className='col-xs-12 home-container no-side-padding' style={{width: this.getContainerWidth(), marginTop: '60px'}}>
@@ -407,6 +408,7 @@ class SourceHome extends React.Component {
                         singleColumn
                         scoped
                         mapping={selected}
+                        searchMeta={selected.search_meta}
                         _location={this.props.location}
                         _match={this.props.match}
                         location={{pathname: selected.versioned_object_id.toString() === selected.uuid ? selected.url : selected.version_url}}
@@ -420,6 +422,7 @@ class SourceHome extends React.Component {
                       singleColumn
                       scoped
                       concept={selected}
+                      searchMeta={selected.search_meta}
                       parent={source}
                       _location={this.props.location}
                       _match={this.props.match}
