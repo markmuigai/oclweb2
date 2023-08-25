@@ -1,9 +1,10 @@
 /*eslint no-process-env: 0*/
-import "core-js/features/url-search-params";
-import React from "react";
-import ReactGA from "react-ga4";
-import alertifyjs from "alertifyjs";
-import moment from "moment";
+import 'core-js/features/url-search-params';
+import React from 'react';
+import ReactGA from 'react-ga4';
+import alertifyjs from 'alertifyjs';
+import moment from 'moment';
+import { Tooltip } from '@mui/material';
 import {
   filter,
   difference,
@@ -84,8 +85,31 @@ export const formatWebsiteLink = (value, style, text) => {
   return "";
 };
 
-export const getIndirectMappings = (mappings, concept_url) =>
-  filter(mappings, { to_concept_url: concept_url });
+export const formatWebsiteLinkTruncated = (value, style, text) => {
+  if(value && value.trim()) {
+    let href = value.trim();
+    if(!href.startsWith('http://') && !href.startsWith('https://'))
+      href = 'https://' + href;
+
+    const label = text || value.trim()
+
+    return (
+      <Tooltip title={label}>
+        <a
+          target='_blank'
+          rel="noopener noreferrer"
+          href={href}
+          className="ellipsis-text"
+          style={merge({width: 'auto', display: 'inline-block'}, (style || {}))}>
+          {label}
+        </a>
+      </Tooltip>
+    );
+  }
+  return '';
+}
+
+export const getIndirectMappings = (mappings, concept_url) => filter(mappings, {to_concept_url: concept_url});
 
 export const getDirectMappings = (mappings, concept_url) =>
   filter(mappings, { from_concept_url: concept_url });
@@ -992,78 +1016,67 @@ export const urlSearchParamsToObject = (urlSearchParams) => {
     result[key] = value;
   }
   return result;
+}
+
+export const toNumDisplay = number => number ? number.toLocaleString() : number
+
+
+export const getSiblings = elem => {
+
+	// Setup siblings array and get the first sibling
+	var siblings = [];
+	var sibling = elem.parentNode.firstChild;
+
+	// Loop through each sibling and push to the array
+	while (sibling) {
+		if (sibling.nodeType === 1 && sibling !== elem) {
+			siblings.push(sibling);
+		}
+		sibling = sibling.nextSibling
+	}
+
+	return siblings;
+
 };
 
-export const toNumDisplay = (number) =>
-  number ? number.toLocaleString() : number;
-
-export const getSiblings = (elem) => {
-  // Setup siblings array and get the first sibling
-  var siblings = [];
-  var sibling = elem.parentNode.firstChild;
-
-  // Loop through each sibling and push to the array
-  while (sibling) {
-    if (sibling.nodeType === 1 && sibling !== elem) {
-      siblings.push(sibling);
-    }
-    sibling = sibling.nextSibling;
+export const sortValuesBySourceSummary = (data, summary, summaryField, isLocale) => {
+  if(isEmpty(compact(data)) || !summary)
+    return data
+  let _data = compact(data).map(d => {
+    d.resultType = 'Ordered'
+    return d
+  })
+  const summaryValues = get(summary, summaryField)
+  let suggested = []
+  if(summaryValues) {
+    const usedValues = map(summaryValues, value => value[0])
+    usedValues.forEach(used => {
+      const _used = find(_data, _d => {
+        const id = _d?.id?.toLowerCase()?.replace('-', '')?.replace('_', '')?.replace(' ', '')
+        const _used = used?.toLowerCase()?.replace('-', '')?.replace('_', '')?.replace(' ', '')
+        return _used === id
+      })
+      if(_used) {
+        suggested.push({..._used, resultType: 'Suggested'})
+        _data = reject(_data, {id: _used?.id})
+      }
+    })
   }
 
-  return siblings;
-};
+  let values = [...suggested, ...orderBy(_data, 'name', 'asc')]
 
-export const sortValuesBySourceSummary = (
-  data,
-  summary,
-  summaryField,
-  isLocale
-) => {
-  if (isEmpty(compact(data)) || !summary) return data;
-  let _data = compact(data).map((d) => {
-    d.resultType = "Ordered";
-    return d;
-  });
-  const summaryValues = get(summary, summaryField);
-  if (summaryValues) {
-    const usedValues = map(summaryValues, (value) => value[0]);
-    usedValues.forEach((used) => {
-      const _used = find(_data, (_d) => {
-        const id = _d?.id
-          ?.toLowerCase()
-          ?.replace("-", "")
-          ?.replace("_", "")
-          ?.replace(" ", "");
-        const _used = used
-          ?.toLowerCase()
-          ?.replace("-", "")
-          ?.replace("_", "")
-          ?.replace(" ", "");
-        return _used === id;
-      });
-      if (_used) _used.resultType = "Suggested";
-    });
-  }
-  let values = orderBy(_data, ["resultType", "name"], ["desc", "asc"]);
-
-  if (isLocale) {
+  if(isLocale) {
     values = uniqBy(
       [
-        {
-          ...find(values, { id: summary.default_locale }),
-          resultType: "Suggested",
-        },
-        ...orderBy(
-          filter(values, (val) =>
-            (summary.supported_locales || []).includes(val.id)
-          ).map((val) => ({ ...val, resultType: "Suggested" })),
-          ["name"],
-          ["asc"]
-        ),
-        ...values,
+        {...find(values, {id: summary.default_locale}), resultType: 'Suggested'},
+        ...filter(
+            values,
+            val => (summary.supported_locales || []).includes(val.id)
+        ).map(val => ({...val, resultType: 'Suggested'})),
+        ...values
       ],
-      "id"
-    );
+      'id'
+    )
   }
 
   return values;
