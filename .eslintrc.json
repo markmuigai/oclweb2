@@ -61,6 +61,9 @@
         "templates": true,
         "lang": "en_US",
         "skipWords": [
+          "coa",
+          "knhdd",
+          "nhdd",
           "paded",
           "csv",
           "uploader",

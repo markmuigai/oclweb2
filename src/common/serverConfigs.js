@@ -287,7 +287,7 @@ export const SERVER_CONFIGS = [
         hideOpenMRSApp: true,
         logoURL: '/knhdd.png',
         footerText: 'Kenya Health Terminology Service. Powered by Open Concept Lab',
-        url: 'https://nhdd.health.go.ke'
+        url: 'https://nhdd.health.go.ke/'
       },
     },
     operations: {
@@ -315,7 +315,7 @@ export const SERVER_CONFIGS = [
         hideOpenMRSApp: true,
         logoURL: 'https://nhdd.health.go.ke/knhdd.png',
         footerText: 'Kenya Health Terminology Service. Powered by Open Concept Lab',
-        url: 'https://nhdd-staging.health.go.ke'
+        url: 'https://nhdd-staging.health.go.ke/'
       },
     },
     operations: {
